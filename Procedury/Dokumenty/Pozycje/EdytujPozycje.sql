@@ -1,7 +1,6 @@
 CREATE OR ALTER PROCEDURE SBD.EdytujPozycje
 	@Id INT = NULL,
 	@TowarKod NVARCHAR(50) = NULL,
-	@JednostkaKod NVARCHAR(20) = NULL,
 	@Ilosc DECIMAL(18, 6) = NULL,
 	@Operator NVARCHAR(100)
 AS
@@ -27,11 +26,15 @@ SET XACT_ABORT ON;
 
 		DECLARE @AnyChanged INT = 0;
 
+		SET @Ilosc = (SELECT JednostkaPrzelicznik FROM SBD.Pozycje WHERE Id = @Id) * @Ilosc;
+
 		IF @Ilosc IS NOT NULL
 		BEGIN
 			
 			IF @Ilosc <= 0 
 				THROW 51029, N'iloœæ pozycji musi byæ wiêksza od zera.', 1
+
+
 
 			IF @Ilosc <> (SELECT Ilosc FROM SBD.Pozycje WHERE Id = @Id)
 			BEGIN
@@ -125,31 +128,16 @@ SET XACT_ABORT ON;
 					FROM SBD.Pozycje pozycja
 					JOIN SBD.Towary t ON t.Kod = @TowarKod
 					WHERE pozycja.Id = @Id
+
 				SET @AnyChanged = 1;
-			END
-		END
 
-		IF @JednostkaKod IS NOT NULL
-		BEGIN
+				DELETE FROM SBD.Alokacje WHERE PozycjaId = @Id
 
-			IF @TowarKod IS NULL
-				SET @TowarKod = (SELECT TowarKod FROM SBD.Pozycje WHERE Id = @Id)
+				INSERT INTO SBD.Alokacje 
+					(PozycjaId, DokumentId, DostawaId, Ilosc, DataUtworzenia, Cecha)
+					VALUES
+					(@Id, @DokumentId, NULL, (SELECT COALESCE(@Ilosc, Ilosc) FROM SBD.Pozycje WHERE Id = @Id), GETDATE(), SBD.DajKluczPustejCechy())
 
-			SELECT j.Kod, j.Przelicznik, j.Id INTO #jednostki FROM SBD.Towary t JOIN SBD.Jednostki j ON j.TowarId = t.Id WHERE t.Kod = @TowarKod
-			
-			IF NOT EXISTS (SELECT 1 FROM #jednostki WHERE Kod = @JednostkaKod)
-				THROW 51029, N'towar nie posiada takiej jednostki.', 1
-
-			IF @JednostkaKod <> (SELECT JednostkaKod FROM SBD.Pozycje WHERE Id = @Id)
-			BEGIN
-				UPDATE pozycja
-					SET pozycja.JednostkaId = j.Id,
-						pozycja.JednostkaKod = j.Kod,
-						pozycja.JednostkaPrzelicznik = j.Przelicznik
-					FROM SBD.Pozycje pozycja
-					JOIN #jednostki j ON j.Kod = @JednostkaKod
-					WHERE pozycja.Id = @Id
-				SET @AnyChanged = 1;
 			END
 		END
 

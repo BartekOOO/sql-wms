@@ -14,6 +14,7 @@ CREATE OR ALTER PROCEDURE SBD.ZalozDokument
 AS
 BEGIN
 SET NOCOUNT ON;
+SET XACT_ABORT ON;
 
 	DECLARE @StartedTran BIT = 0;
 
@@ -193,10 +194,10 @@ SET NOCOUNT ON;
 		    @Operator
 		);
 
+		SET @NoweId = SCOPE_IDENTITY();
+
 		IF @StartedTran = 1
             COMMIT TRAN;
-
-		SET @NoweId = SCOPE_IDENTITY();
 		
 		SELECT CONCAT(N'Pomyœlnie za³o¿ono nowy dokument ', QUOTENAME(NumerDokumentu, N'''')) AS Odpowiedz
 				,	@NoweId AS DokumentId, NumerDokumentu AS DokumentNumer

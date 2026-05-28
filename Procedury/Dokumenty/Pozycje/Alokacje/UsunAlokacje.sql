@@ -4,6 +4,7 @@ CREATE OR ALTER PROCEDURE SBD.UsunAlokacje
 AS
 BEGIN
 SET NOCOUNT ON;
+SET XACT_ABORT ON;
 
 	DECLARE @StartedTran BIT = 0;
 
@@ -45,7 +46,7 @@ SET NOCOUNT ON;
 		ELSE
 			BEGIN
 		
-				UPDATE SBD.Alokacje SET Cecha = N'' WHERE Id = @Id
+				UPDATE SBD.Alokacje SET Cecha = SBD.DajKluczPustejCechy() WHERE Id = @Id
 		END
 
 		IF @StartedTran = 1

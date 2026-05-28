@@ -22,6 +22,6 @@ BEGIN
             REFERENCES SBD.Magazyny(Id),
 
         CONSTRAINT UQ_SBD_Sektory_MagazynId_Kod
-            UNIQUE (MagazynId, Kod)
+            UNIQUE (Kod)
     );
 END

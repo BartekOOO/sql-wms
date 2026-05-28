@@ -15,6 +15,7 @@ CREATE OR ALTER PROCEDURE SBD.EdytujDokument
 AS
 BEGIN
 SET NOCOUNT ON;
+SET XACT_ABORT ON;
 
 	DECLARE @StartedTran BIT = 0;
 
@@ -182,6 +183,11 @@ SET NOCOUNT ON;
 			SET @AnyChanged = 1;
 			UPDATE SBD.Dokumenty SET Opis = @Opis WHERE Id = @Id
 		END
+
+		IF @AnyChanged = 1
+			UPDATE SBD.Dokumenty 
+				SET DataModyfikacji = GETDATE()
+				WHERE Id = @Id;
 
 		IF @StartedTran = 1
 			COMMIT TRAN;

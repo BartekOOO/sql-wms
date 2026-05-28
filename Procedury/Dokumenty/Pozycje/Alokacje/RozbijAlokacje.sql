@@ -6,6 +6,7 @@ CREATE OR ALTER PROCEDURE SBD.RozbijAlokacje
 AS
 BEGIN
 SET NOCOUNT ON;
+SET XACT_ABORT ON;
 
 	DECLARE @StartedTran BIT = 0;
 
@@ -25,6 +26,9 @@ SET NOCOUNT ON;
 		DECLARE @DokumentId INT = (SELECT a.DokumentId FROM SBD.Alokacje a WHERE a.Id = @Id)
 
 		EXEC SBD.WalidacjaBlokady @DokumentId = @DokumentId, @Operator = @Operator
+
+		IF @Ilosc <= 0
+			THROW 51029, N'alokowana iloœæ musi byæ dodatnia.', 1
 
 		IF (SELECT Ilosc FROM #tmp) < @Ilosc
 			THROW 51029, N'¿¹dana iloœæ przekracza obecn¹ iloœæ alokacji.', 1

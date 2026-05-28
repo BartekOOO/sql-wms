@@ -4,6 +4,7 @@ CREATE OR ALTER PROCEDURE SBD.WalidacjaBlokady
 AS
 BEGIN
 SET NOCOUNT ON;
+SET XACT_ABORT ON;
 
 	IF @Operator IS NULL
 		THROW 51029, N'nie podano kodu operatora.', 1

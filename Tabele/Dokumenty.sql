@@ -36,7 +36,7 @@ BEGIN
         SektorDocelowyKod NVARCHAR(50) NULL,
         SektorDocelowyNazwa NVARCHAR(200) NULL,
 
-        Seria NVARCHAR(20) NULL,
+        Seria NVARCHAR(20) DEFAULT(N''),
 
         NumerDokumentu AS
         (
@@ -48,7 +48,7 @@ BEGIN
             + N'/'
             + CONVERT(NVARCHAR(4), DATEPART(YEAR, DataDokumentu))
             + CASE
-                WHEN Seria IS NOT NULL AND LTRIM(RTRIM(Seria)) <> N''
+                WHEN LTRIM(RTRIM(Seria)) <> N''
                     THEN N'/' + Seria
                 ELSE N''
               END
@@ -62,7 +62,7 @@ BEGIN
         OperatorKod NVARCHAR(50) NULL,
 
         CONSTRAINT UQ_SBD_Dokumenty_Typ_Numer_Rok_Miesiac
-            UNIQUE (TypDokumentu, Numer, RokDokumentu, MiesiacDokumentu),
+            UNIQUE (TypDokumentu, Numer, RokDokumentu, MiesiacDokumentu, Seria),
 
         CONSTRAINT CK_SBD_Dokumenty_TypDokumentu
             CHECK (TypDokumentu IN (N'PM', N'WM', N'MM')),
