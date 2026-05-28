@@ -1,0 +1,1 @@
+hmmmmmm, na cele wdrozeniowe dodac serie w ktorej mozna tylko dodawac konkretne towary?
