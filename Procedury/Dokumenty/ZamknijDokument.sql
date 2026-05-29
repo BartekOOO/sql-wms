@@ -37,12 +37,60 @@ SET XACT_ABORT ON;
 		IF @ZablokowanyPrzez <> @Operator
 			THROW 51029, N'dokument jest otwarty przez innego u¿ytkownika.', 1
 
-		--Matryca przejœæ
+		DECLARE @TypDokumentu NVARCHAR(10), @ObecnyStan NVARCHAR(20)
+		
+		SELECT @TypDokumentu = TypDokumentu, @ObecnyStan = [Status]
+			FROM SBD.Dokumenty WHERE Id = @Id
+
+
+		IF @ObecnyStan = N'Anulowany' AND @Akcja = N'Anuluj'
+			THROW 51029, N'dokument zosta³ ju¿ anulowany.', 1
+
+		IF @ObecnyStan = N'Zatwierdzony' AND @Akcja = N'Zatwierdz'
+			THROW 51029, N'dokument zosta³ ju¿ zatwierdzony', 1
+
+		IF @ObecnyStan = N'Szkic' AND @Akcja = N'Anuluj'
+			THROW 51029, N'nie mo¿na anulowaæ szkiców.', 1
+
+		IF @ObecnyStan = N'Anulowany' AND @Akcja = N'Usun'
+			THROW 51029, N'nie mo¿na usuwaæ anulowanych dokumentów.', 1
+
+		IF @ObecnyStan = N'Zatwierdzony' AND @Akcja = N'Usun'
+			THROW 51029, N'nie mo¿na usuwaæ zatwierdzonych dokumentów.', 1
+
+		IF @ObecnyStan = N'Anulowany' AND @Akcja = N'Zatwierdz'
+			THROW 51029, N'nie mo¿na zatwierdzaæ anulowanych dokumentów.', 1
+
+		IF @Akcja NOT IN (N'Brak', N'Usun')
+		BEGIN
+			IF @TypDokumentu = N'PM'
+				EXEC SBD.ObslugaPM @Id, @Akcja, @ObecnyStan
+			IF @TypDokumentu = N'WM'
+				EXEC SBD.ObslugaWM @Id, @Akcja, @ObecnyStan
+			IF @TypDokumentu = N'MM'
+				EXEC SBD.ObslugaMM @Id, @Akcja, @ObecnyStan
+		END
+
+		IF @Akcja = N'Usun'
+		BEGIN
+
+
+		END
 
 		UPDATE SBD.Dokumenty SET OperatorKod = NULL WHERE Id = @Id
 
 		IF @StartedTran = 1
 			COMMIT TRAN;
+
+		DECLARE @Odpowiedz NVARCHAR(MAX) = CONCAT(
+			N'Pomyœlnie uda³o siê ', 
+			CASE WHEN @Akcja = N'Brak' THEN N'zamkn¹æ' 
+				 WHEN @Akcja = N'Usun' THEN N'usun¹æ'
+				 WHEN @Akcja = N'Zatwierdz' THEN N'zatwierdziæ'
+				 WHEN @Akcja = N'Anuluj' THEN N'anulowaæ'
+				 END, N'dokument', N'.');
+
+		SELECT @Odpowiedz AS Odpowiedz
 
 	END TRY
 	BEGIN CATCH
