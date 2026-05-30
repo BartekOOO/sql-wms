@@ -5,8 +5,577 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SQLWMS"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="SQL WMS"
+        Width="1040"
+        Height="640"
+        MinWidth="920"
+        MinHeight="580"
+        WindowStartupLocation="CenterScreen"
+        Background="#F2EDE4"
+        FontFamily="Bahnschrift"
+        UseLayoutRounding="True">
+    <Window.Resources>
+        <LinearGradientBrush x:Key="PageBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#F7F2E9" Offset="0" />
+            <GradientStop Color="#E6EEE9" Offset="0.58" />
+            <GradientStop Color="#DBE6E7" Offset="1" />
+        </LinearGradientBrush>
 
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#173B47" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#BE6943" />
+        <SolidColorBrush x:Key="PanelBrush" Color="#FCFAF6" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#65757C" />
+        <SolidColorBrush x:Key="CardBrush" Color="#F8F3EA" />
+
+        <Style x:Key="ModuleButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="#D9CEC0" />
+            <Setter Property="BorderThickness" Value="1.4" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Width" Value="168" />
+            <Setter Property="Height" Value="168" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="24"
+                                SnapsToDevicePixels="True">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="20" ShadowDepth="6" Opacity="0.11" Color="#2F3D44" />
+                            </Border.Effect>
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="Background" Value="#FFF8F2" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#F0E5D8" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="14,9" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#224C5A" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#102B34" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GhostButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#12FFFFFF" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="#284F5D" />
+            <Setter Property="BorderThickness" Value="1.2" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="14">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#18FFFFFF" />
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource PageBackgroundBrush}">
+        <Canvas IsHitTestVisible="False">
+            <Ellipse Width="260" Height="260" Fill="#23BE6943" Canvas.Left="-70" Canvas.Top="-60" />
+            <Ellipse Width="260" Height="260" Fill="#17173B47" Canvas.Right="-76" Canvas.Top="150" />
+            <Ellipse Width="320" Height="320" Fill="#132D6675" Canvas.Left="760" Canvas.Top="470" />
+        </Canvas>
+
+        <Grid Margin="28,14,28,22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="44" Height="44" CornerRadius="15" Background="{StaticResource PrimaryBrush}">
+                        <TextBlock Text="WMS"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="16"
+                                   FontWeight="SemiBold" />
+                    </Border>
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="SQL WMS"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="24"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="Panel operacyjny"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" />
+                    </StackPanel>
+                </StackPanel>
+
+                        <StackPanel Grid.Column="1"
+                                Margin="34,2,0,0"
+                                VerticalAlignment="Center">
+                            <Border Background="#19BE6943"
+                                CornerRadius="12"
+                                Padding="12,5"
+                                HorizontalAlignment="Left">
+                            <TextBlock Text="Widok glowny"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold" />
+                            </Border>
+
+                            <TextBlock Margin="0,6,0,0"
+                                   MaxWidth="520"
+                                   Text="Glowne obszary magazynu"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="26"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap" />
+
+                            <TextBlock Margin="0,4,0,0"
+                                   MaxWidth="620"
+                                   Text="Dokumenty, magazyny, towary i traceability w jednym miejscu."
+                                   Foreground="{StaticResource MutedBrush}"
+                                   FontSize="13"
+                                   LineHeight="18"
+                                   TextWrapping="Wrap" />
+                        </StackPanel>
+
+                <Button x:Name="BackButton"
+                        Grid.Column="2"
+                        Width="140"
+                        Height="40"
+                        Visibility="Collapsed"
+                        Style="{StaticResource GhostButtonStyle}"
+                        Click="BackButton_Click"
+                        Content="Powrot do startu" />
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Grid x:Name="HomeView">
+                    <Grid
+                                                    Width="382"
+                          Margin="0,10,0,0"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Top">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Row="0"
+                                Grid.Column="0"
+                                Margin="0,0,8,8"
+                                Style="{StaticResource ModuleButtonStyle}"
+                                Click="DocumentsButton_Click">
+                            <StackPanel Width="124" VerticalAlignment="Center">
+                                <Border Width="42"
+                                        Height="42"
+                                        CornerRadius="14"
+                                        Background="#18224C5A"
+                                        HorizontalAlignment="Center">
+                                    <Viewbox Width="20" Height="20" Stretch="Uniform">
+                                        <Path Stroke="{StaticResource PrimaryBrush}"
+                                              StrokeThickness="1.7"
+                                              StrokeLineJoin="Round"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              Data="M6,2 H13 L17,6 V20 H6 Z M13,2 V6 H17 M9,10 H14 M9,14 H14 M9,18 H13" />
+                                    </Viewbox>
+                                </Border>
+
+                                <TextBlock Margin="0,12,0,0"
+                                           Text="Dokumenty"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+
+                                <TextBlock Margin="0,6,0,0"
+                                           Text="Przyjecia, wydania i przesuniecia."
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="12"
+                                           LineHeight="16"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="Przejdz do sekcji"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Row="0"
+                                Grid.Column="1"
+                                Margin="8,0,0,8"
+                                Style="{StaticResource ModuleButtonStyle}"
+                                Click="WarehousesButton_Click">
+                            <StackPanel Width="124" VerticalAlignment="Center">
+                                <Border Width="42"
+                                        Height="42"
+                                        CornerRadius="14"
+                                        Background="#18224C5A"
+                                        HorizontalAlignment="Center">
+                                    <Viewbox Width="20" Height="20" Stretch="Uniform">
+                                        <Path Stroke="{StaticResource PrimaryBrush}"
+                                              StrokeThickness="1.7"
+                                              StrokeLineJoin="Round"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              Data="M3,9 L10,4 17,9 M5,9 V18 H15 V9 M7,12 H13 M7,15 H13" />
+                                    </Viewbox>
+                                </Border>
+
+                                <TextBlock Margin="0,12,0,0"
+                                           Text="Magazyny"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+
+                                <TextBlock Margin="0,6,0,0"
+                                           Text="Struktury, sektory i przestrzenie pracy."
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="12"
+                                           LineHeight="16"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="Przejdz do sekcji"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="0,8,8,0"
+                                Style="{StaticResource ModuleButtonStyle}"
+                                Click="ProductsButton_Click">
+                            <StackPanel Width="124" VerticalAlignment="Center">
+                                <Border Width="42"
+                                        Height="42"
+                                        CornerRadius="14"
+                                        Background="#18224C5A"
+                                        HorizontalAlignment="Center">
+                                    <Viewbox Width="20" Height="20" Stretch="Uniform">
+                                        <Path Stroke="{StaticResource PrimaryBrush}"
+                                              StrokeThickness="1.7"
+                                              StrokeLineJoin="Round"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              Data="M10,3 L17,7 V15 L10,19 3,15 V7 Z M10,3 L3,7 M10,3 L17,7 M10,11 V19 M3,7 L10,11 17,7" />
+                                    </Viewbox>
+                                </Border>
+
+                                <TextBlock Margin="0,12,0,0"
+                                           Text="Towary"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+
+                                <TextBlock Margin="0,6,0,0"
+                                           Text="Kartoteki, cechy i dane asortymentu."
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="12"
+                                           LineHeight="16"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="Przejdz do sekcji"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Row="1"
+                                Grid.Column="1"
+                                Margin="8,8,0,0"
+                                Style="{StaticResource ModuleButtonStyle}"
+                                Click="TraceabilityButton_Click">
+                            <StackPanel Width="124" VerticalAlignment="Center">
+                                <Border Width="42"
+                                        Height="42"
+                                        CornerRadius="14"
+                                        Background="#18224C5A"
+                                        HorizontalAlignment="Center">
+                                    <Viewbox Width="20" Height="20" Stretch="Uniform">
+                                        <Path Stroke="{StaticResource PrimaryBrush}"
+                                              StrokeThickness="1.7"
+                                              StrokeLineJoin="Round"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              Data="M6,4 H14 V17 H6 Z M8,2 H12 V4 M8,8 H12 M8,11 H12 M8,14 H11 M3,10 H6 M14,10 H17" />
+                                    </Viewbox>
+                                </Border>
+
+                                <TextBlock Margin="0,12,0,0"
+                                           Text="Traceability"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+
+                                <TextBlock Margin="0,6,0,0"
+                                           Text="Historia ruchu, pochodzenie i powiazania."
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="12"
+                                           LineHeight="16"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="Przejdz do sekcji"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Grid>
+
+                <Grid x:Name="SectionView" Visibility="Collapsed">
+                    <Border Padding="26"
+                            CornerRadius="28"
+                            Background="#FBF8F3"
+                            BorderBrush="#D4C9BA"
+                            BorderThickness="1.4">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel>
+                                <Border Background="#19BE6943"
+                                        CornerRadius="12"
+                                        Padding="12,5"
+                                        HorizontalAlignment="Left">
+                                    <TextBlock x:Name="SectionBadgeTextBlock"
+                                               Foreground="{StaticResource AccentBrush}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold" />
+                                </Border>
+
+                                <TextBlock x:Name="SectionTitleTextBlock"
+                                           Margin="0,16,0,0"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontSize="34"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock x:Name="SectionDescriptionTextBlock"
+                                           Margin="0,14,0,0"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="16"
+                                           LineHeight="25"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <Grid Grid.Row="1" Margin="0,22,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.15*" />
+                                    <ColumnDefinition Width="0.85*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Margin="0,0,18,0"
+                                        Padding="22"
+                                        CornerRadius="24"
+                                        Background="#EDF3F0">
+                                    <StackPanel>
+                                        <TextBlock Text="Najwazniejsze zadania" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,10,0,0"
+                                                   Text="W tej sekcji uzytkownik przechodzi do glownych operacji i szybciej odnajduje potrzebne informacje. Uklad pozostaje prosty, czytelny i gotowy na dalsza rozbudowe widokow."
+                                                   Foreground="{StaticResource PrimaryBrush}"
+                                                   FontSize="17"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="1"
+                                        Padding="22"
+                                        CornerRadius="24"
+                                        Background="#1734414B">
+                                    <StackPanel>
+                                        <TextBlock Text="Wybrany obszar" Foreground="#F2C6B2" FontSize="12" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="SectionCardTitleTextBlock"
+                                                   Margin="0,12,0,0"
+                                                   Foreground="White"
+                                                   FontSize="24"
+                                                   FontWeight="SemiBold"
+                                                   TextWrapping="Wrap" />
+                                        <TextBlock Margin="0,10,0,0"
+                                                   Text="Powrot do strony glownej jest zawsze dostepny jednym kliknieciem."
+                                                   Foreground="#D4E0E4"
+                                                   FontSize="14"
+                                                   TextWrapping="Wrap" />
+                                        <Button Margin="0,18,0,0"
+                                                Width="170"
+                                                HorizontalAlignment="Left"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Click="BackButton_Click"
+                                                Content="Wroc do panelu" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="2" Margin="0,22,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Margin="0,0,16,0" Padding="18" CornerRadius="20" Background="{StaticResource CardBrush}">
+                                    <StackPanel>
+                                        <TextBlock Text="Przeglad" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,10,0,0" Text="Czytelna lista i szybkie wyszukiwanie informacji potrzebnych w pracy." Foreground="{StaticResource PrimaryBrush}" FontSize="16" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="1" Margin="0,0,16,0" Padding="18" CornerRadius="20" Background="{StaticResource CardBrush}">
+                                    <StackPanel>
+                                        <TextBlock Text="Operacje" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,10,0,0" Text="Miejsce na najczestsze akcje, formularze i scenariusze obslugi." Foreground="{StaticResource PrimaryBrush}" FontSize="16" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="2" Padding="18" CornerRadius="20" Background="{StaticResource CardBrush}">
+                                    <StackPanel>
+                                        <TextBlock Text="Wskazniki" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="SectionBackendHintTextBlock"
+                                                   Margin="0,10,0,0"
+                                                   Foreground="{StaticResource PrimaryBrush}"
+                                                   FontSize="16"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Border Grid.Row="3"
+                                    Margin="0,22,0,0"
+                                    Padding="18,14"
+                                    CornerRadius="18"
+                                    Background="#FFF1E6"
+                                    BorderBrush="#E4C1A7"
+                                    BorderThickness="1.1">
+                                <DockPanel>
+                                    <TextBlock Text="Przeglad sekcji"
+                                               Foreground="{StaticResource AccentBrush}"
+                                               FontWeight="SemiBold"
+                                               DockPanel.Dock="Left" />
+                                    <TextBlock x:Name="SectionFooterTextBlock"
+                                               Margin="14,0,0,0"
+                                               Foreground="{StaticResource PrimaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+
+                <Border Grid.Row="2"
+                    Margin="0,12,0,0"
+                    Padding="16,12"
+                    CornerRadius="18"
+                    Background="#5C173B47">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Obszary: Dokumenty | Magazyny | Towary | Traceability"
+                               Foreground="#F4F6F6"
+                               FontSize="13"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap" />
+
+                    <TextBlock x:Name="FooterNavigationTextBlock"
+                               Grid.Column="1"
+                               Foreground="#F4F6F6"
+                               FontSize="13"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
