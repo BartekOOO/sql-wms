@@ -370,7 +370,9 @@ namespace SQLWMS
             SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
             ProductsDataGrid.Visibility = Visibility.Visible;
             WarehousesDataGrid.Visibility = Visibility.Collapsed;
-            SectionAddressFilterTextBox.Visibility = Visibility.Collapsed;
+            SectionAddressFilterContainer.Visibility = Visibility.Collapsed;
+            SectionAddressSpacerColumn.Width = new GridLength(0);
+            SectionAddressFilterColumn.Width = new GridLength(0);
             SectionStatusTextBlock.Text = "Lista towarow z wariantami widocznymi od razu.";
         }
 
@@ -380,7 +382,9 @@ namespace SQLWMS
             SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
             ProductsDataGrid.Visibility = Visibility.Collapsed;
             WarehousesDataGrid.Visibility = Visibility.Visible;
-            SectionAddressFilterTextBox.Visibility = Visibility.Visible;
+            SectionAddressFilterContainer.Visibility = Visibility.Visible;
+            SectionAddressSpacerColumn.Width = new GridLength(10);
+            SectionAddressFilterColumn.Width = new GridLength(200);
             SectionStatusTextBlock.Text = "Lista magazynow. Rozwin wiersz, aby doladowac sektory.";
         }
 

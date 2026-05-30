@@ -11,6 +11,7 @@ namespace SQLWMS.Models
         public int Id { get; init; }
         public string Kod { get; init; } = string.Empty;
         public string Nazwa { get; init; } = string.Empty;
+        public bool HasVariants { get; init; }
         public int LiczbaWariantow { get; init; }
         public decimal SumaIlosci { get; init; }
         public ObservableCollection<ProductVariantItem> Variants { get; } = [];

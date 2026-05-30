@@ -101,13 +101,18 @@ ORDER BY Cecha;";
 
             public void AddVariant(string cecha, decimal ilosc)
             {
+                _totalQuantity += ilosc;
+
+                if (string.IsNullOrWhiteSpace(cecha))
+                {
+                    return;
+                }
+
                 _variants.Add(new ProductVariantItem
                 {
                     Cecha = cecha,
                     Ilosc = ilosc
                 });
-
-                _totalQuantity += ilosc;
             }
 
             public ProductMasterItem ToProduct()
@@ -117,6 +122,7 @@ ORDER BY Cecha;";
                     Id = Id,
                     Kod = Kod,
                     Nazwa = Nazwa,
+                    HasVariants = _variants.Count > 0,
                     LiczbaWariantow = _variants.Count,
                     SumaIlosci = _totalQuantity
                 };
@@ -127,10 +133,13 @@ ORDER BY Cecha;";
                 }
 
                 product.DetailsLoaded = true;
-                product.IsExpanded = true;
-                product.DetailStatus = _variants.Count == 1
-                    ? "1 wariant"
-                    : $"Warianty: {_variants.Count}";
+                product.IsExpanded = _variants.Count > 0;
+                product.DetailStatus = _variants.Count switch
+                {
+                    0 => "Towar bez wariantow.",
+                    1 => "1 wariant",
+                    _ => $"Warianty: {_variants.Count}"
+                };
 
                 return product;
             }

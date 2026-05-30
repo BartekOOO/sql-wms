@@ -540,8 +540,8 @@
                                         <ColumnDefinition Width="160" />
                                         <ColumnDefinition Width="10" />
                                         <ColumnDefinition Width="200" />
-                                        <ColumnDefinition Width="10" />
-                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition x:Name="SectionAddressSpacerColumn" Width="10" />
+                                        <ColumnDefinition x:Name="SectionAddressFilterColumn" Width="200" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
@@ -611,7 +611,7 @@
                                         </TextBlock>
                                     </Grid>
 
-                                    <Grid Grid.Column="4">
+                                    <Grid x:Name="SectionAddressFilterContainer" Grid.Column="4">
                                         <TextBox x:Name="SectionAddressFilterTextBox"
                                                  Height="28"
                                                  Padding="10,6"
@@ -674,6 +674,8 @@
                                                   CanUserAddRows="False"
                                                   CanUserDeleteRows="False"
                                                   CanUserSortColumns="True"
+                                                  EnableRowVirtualization="False"
+                                                  EnableColumnVirtualization="False"
                                                   HeadersVisibility="Column"
                                                   RowHeaderWidth="0"
                                                   GridLinesVisibility="All"
@@ -684,10 +686,23 @@
                                                   Background="White"
                                                   BorderBrush="#D6E0DD"
                                                   BorderThickness="1"
-                                                  RowDetailsVisibilityMode="Visible"
+                                                  RowDetailsVisibilityMode="Collapsed"
+                                                  ScrollViewer.CanContentScroll="False"
+                                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                                   SelectionMode="Single"
                                                   SelectionUnit="FullRow"
                                                   MinColumnWidth="70">
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                                    <Setter Property="DetailsVisibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasVariants}" Value="True">
+                                                            <Setter Property="DetailsVisibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.RowStyle>
                                             <DataGrid.RowDetailsTemplate>
                                                 <DataTemplate>
                                                     <Border Margin="10,0,10,10"
@@ -707,6 +722,8 @@
                                                                       CanUserAddRows="False"
                                                                       CanUserDeleteRows="False"
                                                                       CanUserSortColumns="True"
+                                                                      EnableRowVirtualization="False"
+                                                                      EnableColumnVirtualization="False"
                                                                       HeadersVisibility="Column"
                                                                       RowHeaderWidth="0"
                                                                       GridLinesVisibility="All"
@@ -716,7 +733,10 @@
                                                                       RowBackground="White"
                                                                       Background="White"
                                                                       BorderBrush="#E0D5C8"
-                                                                      BorderThickness="1">
+                                                                      BorderThickness="1"
+                                                                      ScrollViewer.CanContentScroll="False"
+                                                                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                                                 <DataGrid.Columns>
                                                                     <DataGridTextColumn Header="Cecha" Binding="{Binding Cecha}" Width="*" />
                                                                     <DataGridTextColumn Header="Ilosc" Binding="{Binding Ilosc, StringFormat=N2}" Width="120" />
@@ -741,6 +761,8 @@
                                                   CanUserAddRows="False"
                                                   CanUserDeleteRows="False"
                                                   CanUserSortColumns="True"
+                                                  EnableRowVirtualization="False"
+                                                  EnableColumnVirtualization="False"
                                                   HeadersVisibility="Column"
                                                   RowHeaderWidth="0"
                                                   GridLinesVisibility="All"
@@ -752,6 +774,9 @@
                                                   BorderBrush="#D6E0DD"
                                                   BorderThickness="1"
                                                   RowDetailsVisibilityMode="Collapsed"
+                                                  ScrollViewer.CanContentScroll="False"
+                                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                                   SelectionMode="Single"
                                                   SelectionUnit="FullRow"
                                                   MinColumnWidth="70">
@@ -777,28 +802,65 @@
                                                             <TextBlock Text="{Binding DetailStatus}"
                                                                        Foreground="{StaticResource MutedBrush}"
                                                                        FontSize="12" />
-                                                            <DataGrid ItemsSource="{Binding Sectors}"
-                                                                      Margin="0,8,0,0"
-                                                                      AutoGenerateColumns="False"
-                                                                      IsReadOnly="True"
-                                                                      CanUserAddRows="False"
-                                                                      CanUserDeleteRows="False"
-                                                                      CanUserSortColumns="True"
-                                                                      HeadersVisibility="Column"
-                                                                      RowHeaderWidth="0"
-                                                                      GridLinesVisibility="All"
-                                                                      HorizontalGridLinesBrush="#E5DED5"
-                                                                      VerticalGridLinesBrush="#E5DED5"
-                                                                      AlternatingRowBackground="#FFFDF9F4"
-                                                                      RowBackground="White"
-                                                                      Background="White"
-                                                                      BorderBrush="#E0D5C8"
-                                                                      BorderThickness="1">
-                                                                <DataGrid.Columns>
-                                                                    <DataGridTextColumn Header="Kod sektora" Binding="{Binding Kod}" Width="180" />
-                                                                    <DataGridTextColumn Header="Nazwa sektora" Binding="{Binding Nazwa}" Width="*" />
-                                                                </DataGrid.Columns>
-                                                            </DataGrid>
+                                                            <Border Margin="0,8,0,0"
+                                                                    Background="White"
+                                                                    BorderBrush="#E0D5C8"
+                                                                    BorderThickness="1">
+                                                                <Grid Grid.IsSharedSizeScope="True">
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto" />
+                                                                        <RowDefinition Height="*" />
+                                                                    </Grid.RowDefinitions>
+
+                                                                    <Grid Background="#DDE8EC">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="220" SharedSizeGroup="SectorCodeColumn" />
+                                                                            <ColumnDefinition Width="*" SharedSizeGroup="SectorNameColumn" />
+                                                                        </Grid.ColumnDefinitions>
+
+                                                                        <TextBlock Margin="14,12"
+                                                                                   Foreground="{StaticResource PrimaryBrush}"
+                                                                                   FontSize="13"
+                                                                                   FontWeight="SemiBold"
+                                                                                   Text="Kod sektora" />
+                                                                        <TextBlock Grid.Column="1"
+                                                                                   Margin="14,12"
+                                                                                   Foreground="{StaticResource PrimaryBrush}"
+                                                                                   FontSize="13"
+                                                                                   FontWeight="SemiBold"
+                                                                                   Text="Nazwa sektora" />
+                                                                    </Grid>
+
+                                                                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Sectors}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate>
+                                                                                <Border BorderBrush="#E5DED5"
+                                                                                        BorderThickness="0,0,0,1"
+                                                                                        Background="White"
+                                                                                        Padding="0">
+                                                                                    <Grid>
+                                                                                        <Grid.ColumnDefinitions>
+                                                                                            <ColumnDefinition Width="220" SharedSizeGroup="SectorCodeColumn" />
+                                                                                            <ColumnDefinition Width="*" SharedSizeGroup="SectorNameColumn" />
+                                                                                        </Grid.ColumnDefinitions>
+
+                                                                                        <TextBlock Margin="14,9"
+                                                                                                   Foreground="{StaticResource PrimaryBrush}"
+                                                                                                   FontSize="13"
+                                                                                                   Text="{Binding Kod}" />
+                                                                                        <TextBlock Grid.Column="1"
+                                                                                                   Margin="14,9"
+                                                                                                   Foreground="{StaticResource PrimaryBrush}"
+                                                                                                   FontSize="13"
+                                                                                                   Text="{Binding Nazwa}"
+                                                                                                   TextWrapping="Wrap" />
+                                                                                    </Grid>
+                                                                                </Border>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </Grid>
+                                                            </Border>
                                                         </StackPanel>
                                                     </Border>
                                                 </DataTemplate>
