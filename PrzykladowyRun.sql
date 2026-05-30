@@ -3,7 +3,6 @@ SELECT * FROM SBD.Magazyny
 
 EXEC SBD.ZalozDokument
 	@TypDokumentu = N'PM',
-	@MagazynDocelowy = N'MAG-GL',
 	@Operator = N'BAWLA'
 
 SELECT * FROM SBD.Dokumenty

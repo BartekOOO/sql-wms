@@ -147,6 +147,124 @@
             </Setter>
         </Style>
 
+        <Style x:Key="DocumentFilterComboBoxItemStyle" TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Left"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#FBF2E7" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#F2E4D6" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DocumentFilterComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D7CCC0" />
+            <Setter Property="BorderThickness" Value="1.2" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource DocumentFilterComboBoxItemStyle}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="ComboBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4"
+                                    SnapsToDevicePixels="True">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="34" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ContentPresenter Margin="12,0,8,0"
+                                                      VerticalAlignment="Center"
+                                                      HorizontalAlignment="Left"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" />
+
+                                    <Border Grid.Column="1"
+                                            Background="#F3ECE3"
+                                            BorderBrush="#D7CCC0"
+                                            BorderThickness="1,0,0,0">
+                                        <Path HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Stroke="{StaticResource PrimaryBrush}"
+                                              StrokeThickness="1.8"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              Data="M4,6 L9,11 L14,6" />
+                                    </Border>
+
+                                    <ToggleButton Grid.ColumnSpan="2"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  Focusable="False"
+                                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  ClickMode="Press" />
+                                </Grid>
+                            </Border>
+
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="True"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Placement="Bottom"
+                                   PopupAnimation="Fade">
+                                <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Margin="0,4,0,0"
+                                        Background="White"
+                                        BorderBrush="#D7CCC0"
+                                        BorderThickness="1.2"
+                                        CornerRadius="4">
+                                    <ScrollViewer MaxHeight="260"
+                                                  CanContentScroll="True">
+                                        <StackPanel IsItemsHost="True"
+                                                    KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="ComboBorder" Property="Background" Value="#FFF9F2" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ComboBorder" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="SectionExpanderToggleStyle" TargetType="ToggleButton">
             <Setter Property="Width" Value="20" />
             <Setter Property="Height" Value="20" />
@@ -286,14 +404,34 @@
                                    TextWrapping="Wrap" />
                         </StackPanel>
 
-                <Button x:Name="BackButton"
-                        Grid.Column="2"
+                <StackPanel Grid.Column="2"
+                        Orientation="Vertical"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center">
+                    <TextBlock x:Name="CurrentUserTextBlock"
+                           HorizontalAlignment="Right"
+                           Foreground="{StaticResource MutedBrush}"
+                           FontSize="12"
+                           Text="Brak aktywnego uzytkownika" />
+                    <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,6,0,0">
+                    <Button x:Name="LoginButton"
+                        Width="126"
+                        Height="34"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Click="LoginButton_Click"
+                        Content="Zaloguj" />
+                    <Button x:Name="BackButton"
                         Width="140"
-                        Height="40"
+                        Height="34"
+                        Margin="8,0,0,0"
                         Visibility="Collapsed"
                         Style="{StaticResource GhostButtonStyle}"
                         Click="BackButton_Click"
                         Content="Powrot do startu" />
+                    </StackPanel>
+                </StackPanel>
             </Grid>
 
             <Grid Grid.Row="1">
@@ -647,6 +785,79 @@
                                 </Grid>
                             </StackPanel>
 
+                            <StackPanel x:Name="DocumentsToolbarPanel"
+                                        Grid.Row="1"
+                                        Margin="0,8,0,0"
+                                        Visibility="Collapsed">
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="240" />
+                                        <ColumnDefinition Width="12" />
+                                        <ColumnDefinition Width="170" />
+                                        <ColumnDefinition Width="12" />
+                                        <ColumnDefinition Width="170" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid>
+                                        <TextBox x:Name="DocumentNumberFilterTextBox"
+                                                 Height="28"
+                                                 Padding="10,6"
+                                                 Background="White"
+                                                 BorderBrush="#D7CCC0"
+                                                 BorderThickness="1.2"
+                                                 FontSize="13"
+                                                 ToolTip="Filtr Numer dokumentu"
+                                                 TextChanged="SectionFilterTextBox_TextChanged" />
+                                        <TextBlock Margin="12,0,0,0"
+                                                   Foreground="{StaticResource MutedBrush}"
+                                                   FontSize="13"
+                                                   IsHitTestVisible="False"
+                                                   Text="Numer dokumentu"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Text, ElementName=DocumentNumberFilterTextBox}" Value="" />
+                                                                <Condition Binding="{Binding IsKeyboardFocusWithin, ElementName=DocumentNumberFilterTextBox}" Value="False" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+
+                                    <ComboBox x:Name="DocumentTypeFilterComboBox"
+                                              Grid.Column="2"
+                                              Height="28"
+                                              Style="{StaticResource DocumentFilterComboBoxStyle}"
+                                              SelectionChanged="DocumentFilterComboBox_SelectionChanged"
+                                              SelectedIndex="0">
+                                        <ComboBoxItem Content="Wszystkie typy" Tag="" />
+                                        <ComboBoxItem Content="PM" Tag="PM" />
+                                        <ComboBoxItem Content="WM" Tag="WM" />
+                                        <ComboBoxItem Content="MM" Tag="MM" />
+                                    </ComboBox>
+
+                                    <ComboBox x:Name="DocumentStatusFilterComboBox"
+                                              Grid.Column="4"
+                                              Height="28"
+                                              Style="{StaticResource DocumentFilterComboBoxStyle}"
+                                              SelectionChanged="DocumentFilterComboBox_SelectionChanged"
+                                              SelectedIndex="0">
+                                        <ComboBoxItem Content="Wszystkie statusy" Tag="" />
+                                        <ComboBoxItem Content="Szkic" Tag="Szkic" />
+                                        <ComboBoxItem Content="Zatwierdzony" Tag="Zatwierdzony" />
+                                        <ComboBoxItem Content="Anulowany" Tag="Anulowany" />
+                                    </ComboBox>
+                                </Grid>
+                            </StackPanel>
+
                             <Border Grid.Row="2"
                                         Margin="0,10,0,0"
                                         Padding="10"
@@ -658,6 +869,7 @@
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
                                     <TextBlock x:Name="SectionStatusTextBlock"
@@ -667,6 +879,182 @@
                                                Text="Wybierz sekcje do podgladu danych." />
 
                                     <Grid Grid.Row="1" Margin="0,10,0,0">
+                                        <DataGrid x:Name="DocumentsDataGrid"
+                                                  AutoGenerateColumns="False"
+                                                  Visibility="Collapsed"
+                                                  IsReadOnly="True"
+                                                  CanUserAddRows="False"
+                                                  CanUserDeleteRows="False"
+                                                  CanUserSortColumns="False"
+                                                  EnableRowVirtualization="False"
+                                                  EnableColumnVirtualization="False"
+                                                  HeadersVisibility="Column"
+                                                  RowHeaderWidth="0"
+                                                  GridLinesVisibility="All"
+                                                  HorizontalGridLinesBrush="#DDE5E3"
+                                                  VerticalGridLinesBrush="#DCCFC0"
+                                                  AlternatingRowBackground="#FFF8F3EA"
+                                                  RowBackground="White"
+                                                  Background="White"
+                                                  BorderBrush="#D6E0DD"
+                                                  BorderThickness="1"
+                                                  ScrollViewer.CanContentScroll="False"
+                                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                  SelectionMode="Single"
+                                                  SelectionUnit="FullRow"
+                                                  PreviewMouseRightButtonDown="DocumentsDataGrid_PreviewMouseRightButtonDown"
+                                                  MinColumnWidth="0">
+                                            <DataGrid.ContextMenu>
+                                                <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
+                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Otworz {0}, TargetNullValue=Otworz wybrany dokument, FallbackValue=Otworz wybrany dokument}">
+                                                        <MenuItem.Style>
+                                                            <Style TargetType="MenuItem">
+                                                                <Setter Property="IsEnabled" Value="True" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                                                        <Setter Property="IsEnabled" Value="False" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </MenuItem.Style>
+                                                        <MenuItem.Icon>
+                                                            <Viewbox Width="14" Height="14">
+                                                                <Path Fill="#173B47"
+                                                                      Data="M6,2 A4,4 0 1 1 2,6 A4,4 0 0 1 6,2 M9.5,9.5 L13,13 M6,3.5 A2.5,2.5 0 1 0 8.5,6 A2.5,2.5 0 0 0 6,3.5" />
+                                                            </Viewbox>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+
+                                                    <Separator />
+
+                                                    <MenuItem Header="Nowy PM">
+                                                        <MenuItem.Icon>
+                                                            <Viewbox Width="14" Height="14">
+                                                                <Path Fill="#2E7D32"
+                                                                      Data="M6,1 H8 V6 H13 V8 H8 V13 H6 V8 H1 V6 H6 Z" />
+                                                            </Viewbox>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+
+                                                    <MenuItem Header="Nowy MM">
+                                                        <MenuItem.Icon>
+                                                            <Viewbox Width="14" Height="14">
+                                                                <Path Fill="#2E7D32"
+                                                                      Data="M6,1 H8 V6 H13 V8 H8 V13 H6 V8 H1 V6 H6 Z" />
+                                                            </Viewbox>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+
+                                                    <MenuItem Header="Nowy WM">
+                                                        <MenuItem.Icon>
+                                                            <Viewbox Width="14" Height="14">
+                                                                <Path Fill="#2E7D32"
+                                                                      Data="M6,1 H8 V6 H13 V8 H8 V13 H6 V8 H1 V6 H6 Z" />
+                                                            </Viewbox>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+
+                                                    <Separator />
+
+                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Usun {0}, TargetNullValue=Usun wybrany dokument, FallbackValue=Usun wybrany dokument}">
+                                                        <MenuItem.Style>
+                                                            <Style TargetType="MenuItem">
+                                                                <Setter Property="IsEnabled" Value="True" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                                                        <Setter Property="IsEnabled" Value="False" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </MenuItem.Style>
+                                                        <MenuItem.Icon>
+                                                            <Viewbox Width="14" Height="14">
+                                                                <Path Fill="#B42318"
+                                                                      Data="M4,2 H10 L10.8,3 H13 V5 H1 V3 H3.2 Z M3,6 H11 L10.4,13 H3.6 Z M5,7.5 H6.2 V11.5 H5 Z M7.8,7.5 H9 V11.5 H7.8 Z" />
+                                                            </Viewbox>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+
+                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Zatwierdz {0}, TargetNullValue=Zatwierdz wybrany dokument, FallbackValue=Zatwierdz wybrany dokument}">
+                                                        <MenuItem.Style>
+                                                            <Style TargetType="MenuItem">
+                                                                <Setter Property="IsEnabled" Value="True" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                                                        <Setter Property="IsEnabled" Value="False" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </MenuItem.Style>
+                                                        <MenuItem.Icon>
+                                                            <Viewbox Width="14" Height="14">
+                                                                <Path Fill="#2E7D32"
+                                                                      Data="M2,7.5 L5.4,10.9 L12,4.3 L10.8,3.1 L5.4,8.5 L3.2,6.3 Z" />
+                                                            </Viewbox>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+
+                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Anuluj {0}, TargetNullValue=Anuluj wybrany dokument, FallbackValue=Anuluj wybrany dokument}">
+                                                        <MenuItem.Style>
+                                                            <Style TargetType="MenuItem">
+                                                                <Setter Property="IsEnabled" Value="True" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                                                        <Setter Property="IsEnabled" Value="False" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </MenuItem.Style>
+                                                        <MenuItem.Icon>
+                                                            <Viewbox Width="14" Height="14">
+                                                                <Path Fill="#8A6A00"
+                                                                      Data="M7,1.2 L13,12 H1 Z M7,4.2 A0.8,0.8 0 1 1 6.2,5 A0.8,0.8 0 0 1 7,4.2 M6.3,6.2 H7.7 V9.8 H6.3 Z M6.3,10.5 H7.7 V11.7 H6.3 Z" />
+                                                            </Viewbox>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </DataGrid.ContextMenu>
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                                    <EventSetter Event="PreviewMouseRightButtonDown" Handler="DocumentsDataGridRow_PreviewMouseRightButtonDown" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding StatusDokumentu}" Value="Szkic">
+                                                            <Setter Property="Foreground" Value="#2E7D32" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusDokumentu}" Value="Zatwierdzony">
+                                                            <Setter Property="Foreground" Value="#111111" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusDokumentu}" Value="Anulowany">
+                                                            <Setter Property="Foreground" Value="#8A8A8A" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsOpened}" Value="True">
+                                                            <Setter Property="Foreground" Value="#B42318" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsOpenedByCurrentUser}" Value="True">
+                                                            <Setter Property="Foreground" Value="#0E5A8A" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.RowStyle>
+                                            <DataGrid.CellStyle>
+                                                <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                                                    <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=Foreground}" />
+                                                    <Setter Property="Padding" Value="6,7" />
+                                                </Style>
+                                            </DataGrid.CellStyle>
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Numer dokumentu" Binding="{Binding NumerDokumentu}" Width="1.35*" />
+                                                <DataGridTextColumn Header="Status" Binding="{Binding StatusDokumentu}" Width="0.95*" />
+                                                <DataGridTextColumn Header="Data realizacji" Binding="{Binding DataRealizacji, StringFormat=dd.MM.yyyy HH:mm}" Width="1.1*" />
+                                                <DataGridTextColumn Header="Magazyn zrodlowy" Binding="{Binding MagazynZrodlowyKod}" Width="1.05*" />
+                                                <DataGridTextColumn Header="Sektor zrodlowy" Binding="{Binding SektorZrodlowyKod}" Width="0.95*" />
+                                                <DataGridTextColumn Header="Magazyn docelowy" Binding="{Binding MagazynDocelowyKod}" Width="1.05*" />
+                                                <DataGridTextColumn Header="Sektor docelowy" Binding="{Binding SektorDocelowyKod}" Width="0.95*" />
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+
                                         <DataGrid x:Name="ProductsDataGrid"
                                                   AutoGenerateColumns="False"
                                                   Visibility="Collapsed"
@@ -901,6 +1289,56 @@
                                             </StackPanel>
                                         </Border>
                                     </Grid>
+
+                                    <Border x:Name="DocumentsPaginationPanel"
+                                            Grid.Row="2"
+                                            Margin="0,10,0,0"
+                                            Padding="10,8"
+                                            Visibility="Collapsed"
+                                            CornerRadius="4"
+                                            Background="#F6EFE6"
+                                            BorderBrush="#D4C9BA"
+                                            BorderThickness="1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button x:Name="DocumentsPreviousPageButton"
+                                                        Width="104"
+                                                        Height="28"
+                                                        Style="{StaticResource SectionActionButtonStyle}"
+                                                        Click="DocumentsPreviousPageButton_Click"
+                                                        Content="Poprzednia" />
+                                                <Button x:Name="DocumentsNextPageButton"
+                                                        Width="104"
+                                                        Height="28"
+                                                        Margin="8,0,0,0"
+                                                        Style="{StaticResource SectionActionButtonStyle}"
+                                                        Click="DocumentsNextPageButton_Click"
+                                                        Content="Nastepna" />
+                                            </StackPanel>
+
+                                            <TextBlock x:Name="DocumentsPaginationTextBlock"
+                                                       Grid.Column="1"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{StaticResource PrimaryBrush}"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold"
+                                                       Text="Strona 1 z 1" />
+
+                                            <TextBlock x:Name="DocumentsResultsTextBlock"
+                                                       Grid.Column="2"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{StaticResource MutedBrush}"
+                                                       FontSize="12"
+                                                       Text="0 rekordow" />
+                                        </Grid>
+                                    </Border>
                                 </Grid>
                             </Border>
 

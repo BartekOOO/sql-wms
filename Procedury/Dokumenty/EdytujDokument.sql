@@ -82,6 +82,18 @@ SET XACT_ABORT ON;
 		IF @FinalnySektorDocelowy = @FinalnySektorZrodlowy AND @TypDokumentu = N'MM'
 			THROW 51029, N'sektor docelowy i Ÿród³owy nie mo¿e byæ ten sam.', 1
 
+		IF @FinalnySektorDocelowy IS NOT NULL AND NOT EXISTS (SELECT 1 FROM 
+				SBD.Sektory s JOIN SBD.Magazyny m ON m.Id = s.MagazynId
+				WHERE m.Kod = @FinalnyMagazynDocelowy AND s.Kod = @FinalnySektorDocelowy)
+			THROW 51029, N'magazyn docelowy nie posiada takiego sektora.', 1
+
+		IF @FinalnySektorZrodlowy IS NOT NULL AND NOT EXISTS (SELECT 1 FROM 
+				SBD.Sektory s JOIN SBD.Magazyny m ON m.Id = s.MagazynId
+				WHERE m.Kod = @FinalnyMagazynZrodlowy AND s.Kod = @FinalnySektorZrodlowy)
+			THROW 51029, N'magazyn Ÿród³owy nie posiada takiego sektora.', 1
+
+
+
 		IF @MagazynZrodlowy IS NOT NULL AND @MagazynZrodlowy <> @StaryMagazynZrodlowy
 		BEGIN
 			SET @AnyChanged = 1;
@@ -167,16 +179,6 @@ SET XACT_ABORT ON;
 						WHERE dok.Id = @Id
 				END
 		END
-		
-		IF @FinalnySektorDocelowy IS NOT NULL AND NOT EXISTS (SELECT 1 FROM 
-				SBD.Sektory s JOIN SBD.Magazyny m ON m.Id = s.MagazynId
-				WHERE m.Kod = @FinalnyMagazynDocelowy AND s.Kod = @FinalnySektorDocelowy)
-			THROW 51029, N'magazyn docelowy nie posiada takiego sektora.', 1
-
-		IF @FinalnySektorZrodlowy IS NOT NULL AND NOT EXISTS (SELECT 1 FROM 
-				SBD.Sektory s JOIN SBD.Magazyny m ON m.Id = s.MagazynId
-				WHERE m.Kod = @FinalnyMagazynZrodlowy AND s.Kod = @FinalnySektorZrodlowy)
-			THROW 51029, N'magazyn Ÿród³owy nie posiada takiego sektora.', 1
 
 		IF @Opis IS NOT NULL AND @Opis <> @StaryOpis
 		BEGIN

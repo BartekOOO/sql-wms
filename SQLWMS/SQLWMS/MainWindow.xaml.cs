@@ -14,12 +14,20 @@ namespace SQLWMS
 {
     public partial class MainWindow : Window
     {
+        private const int DocumentsPageSize = 7;
+
+        private readonly DocumentCatalogService _documentCatalogService = new();
         private readonly ProductCatalogService _productCatalogService = new();
         private readonly WarehouseCatalogService _warehouseCatalogService = new();
+        private readonly UserSessionService _userSessionService = new();
+        private readonly ObservableCollection<DocumentListItem> _documents = [];
         private readonly ObservableCollection<ProductMasterItem> _products = [];
         private readonly ObservableCollection<WarehouseMasterItem> _warehouses = [];
+        private readonly ICollectionView _documentsView;
         private readonly ICollectionView _productsView;
         private readonly ICollectionView _warehousesView;
+        private int _documentsCurrentPage = 1;
+        private int _documentsTotalCount;
         private int _filterRequestVersion;
         private bool _suspendFilterReload;
         private NavigationSection _currentSection = NavigationSection.Home;
@@ -37,11 +45,14 @@ namespace SQLWMS
         {
             InitializeComponent();
 
+            _documentsView = CollectionViewSource.GetDefaultView(_documents);
             _productsView = CollectionViewSource.GetDefaultView(_products);
             _warehousesView = CollectionViewSource.GetDefaultView(_warehouses);
+            DocumentsDataGrid.ItemsSource = _documentsView;
             ProductsDataGrid.ItemsSource = _productsView;
             WarehousesDataGrid.ItemsSource = _warehousesView;
 
+            UpdateCurrentUserPresentation();
             ShowHome();
         }
 
@@ -114,6 +125,23 @@ namespace SQLWMS
             }
         }
 
+        private void DocumentsDataGridRow_PreviewMouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (sender is DataGridRow row)
+            {
+                row.IsSelected = true;
+                row.Focus();
+            }
+        }
+
+        private void DocumentsDataGrid_PreviewMouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (FindVisualParent<DataGridRow>(e.OriginalSource as DependencyObject) is null)
+            {
+                DocumentsDataGrid.SelectedItem = null;
+            }
+        }
+
         private static void SetRowDetailsVisibility(DependencyObject source, Visibility visibility)
         {
             if (FindVisualParent<DataGridRow>(source) is DataGridRow row)
@@ -144,6 +172,28 @@ namespace SQLWMS
             ShowHome();
         }
 
+        private async void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            LoginWindow loginWindow = new(_userSessionService.CurrentUser)
+            {
+                Owner = this
+            };
+
+            bool? result = loginWindow.ShowDialog();
+            if (result != true)
+            {
+                return;
+            }
+
+            _userSessionService.SaveCurrentUser(loginWindow.UserName);
+            UpdateCurrentUserPresentation();
+
+            if (_currentSection == NavigationSection.Documents)
+            {
+                await ReloadCurrentSectionAsync();
+            }
+        }
+
         private async void SectionFilterTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             if (_suspendFilterReload)
@@ -151,6 +201,44 @@ namespace SQLWMS
                 return;
             }
 
+            if (_currentSection == NavigationSection.Documents)
+            {
+                _documentsCurrentPage = 1;
+            }
+
+            await ReloadCurrentSectionAsync();
+        }
+
+        private async void DocumentFilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suspendFilterReload)
+            {
+                return;
+            }
+
+            _documentsCurrentPage = 1;
+            await ReloadCurrentSectionAsync();
+        }
+
+        private async void DocumentsPreviousPageButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_documentsCurrentPage <= 1)
+            {
+                return;
+            }
+
+            _documentsCurrentPage--;
+            await ReloadCurrentSectionAsync();
+        }
+
+        private async void DocumentsNextPageButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_documentsCurrentPage >= GetDocumentsTotalPages())
+            {
+                return;
+            }
+
+            _documentsCurrentPage++;
             await ReloadCurrentSectionAsync();
         }
 
@@ -162,6 +250,7 @@ namespace SQLWMS
             SectionView.Visibility = Visibility.Collapsed;
             HomeOverviewPanel.Visibility = Visibility.Visible;
             BackButton.Visibility = Visibility.Collapsed;
+            LoginButton.Visibility = Visibility.Visible;
         }
 
         private async Task NavigateToAsync(NavigationSection section)
@@ -172,6 +261,7 @@ namespace SQLWMS
             SectionView.Visibility = Visibility.Visible;
             HomeOverviewPanel.Visibility = Visibility.Collapsed;
             BackButton.Visibility = Visibility.Visible;
+            LoginButton.Visibility = Visibility.Collapsed;
             SectionTitleTextBlock.Text = GetSectionTitle(section);
             SectionDescriptionTextBlock.Text = GetSectionDescription(section);
             SectionFooterTextBlock.Text = GetSectionFooter(section);
@@ -179,7 +269,21 @@ namespace SQLWMS
             SectionCodeFilterTextBox.Text = string.Empty;
             SectionNameFilterTextBox.Text = string.Empty;
             SectionAddressFilterTextBox.Text = string.Empty;
+            DocumentNumberFilterTextBox.Text = string.Empty;
+            DocumentTypeFilterComboBox.SelectedIndex = 0;
+            DocumentStatusFilterComboBox.SelectedIndex = 0;
+            _documentsCurrentPage = 1;
             _suspendFilterReload = false;
+
+            SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
+
+            if (section == NavigationSection.Documents)
+            {
+                DocumentsDataGrid.Items.Refresh();
+                ShowDocumentsLayout();
+                await ReloadCurrentSectionAsync();
+                return;
+            }
 
             if (section == NavigationSection.Products)
             {
@@ -202,6 +306,11 @@ namespace SQLWMS
 
         private Task ReloadCurrentSectionAsync()
         {
+            if (_currentSection == NavigationSection.Documents)
+            {
+                return LoadDocumentsAsync(++_filterRequestVersion);
+            }
+
             if (_currentSection == NavigationSection.Products)
             {
                 return LoadProductsAsync(++_filterRequestVersion);
@@ -213,6 +322,64 @@ namespace SQLWMS
             }
 
             return Task.CompletedTask;
+        }
+
+        private async Task LoadDocumentsAsync(int requestVersion)
+        {
+            string documentNumberFilter = DocumentNumberFilterTextBox.Text.Trim();
+            string documentTypeFilter = GetSelectedFilterValue(DocumentTypeFilterComboBox);
+            string documentStatusFilter = GetSelectedFilterValue(DocumentStatusFilterComboBox);
+
+            try
+            {
+                SectionStatusTextBlock.Text = "Ladowanie listy dokumentow...";
+
+                DocumentPageResult page = await _documentCatalogService.LoadDocumentsAsync(
+                    _documentsCurrentPage,
+                    DocumentsPageSize,
+                    documentNumberFilter,
+                    documentTypeFilter,
+                    documentStatusFilter);
+
+                if (requestVersion != _filterRequestVersion || _currentSection != NavigationSection.Documents)
+                {
+                    return;
+                }
+
+                _documents.Clear();
+                foreach (DocumentListItem item in page.Items)
+                {
+                    item.IsOpenedByCurrentUser = item.IsOpened
+                        && string.Equals(item.OtworzonyPrzez, _userSessionService.CurrentUser, StringComparison.OrdinalIgnoreCase);
+                    _documents.Add(item);
+                }
+
+                _documentsTotalCount = page.TotalCount;
+                _documentsView.Refresh();
+                UpdateDocumentsPagination();
+
+                if (_documents.Count == 0)
+                {
+                    SectionStatusTextBlock.Text = "Brak dokumentow dla aktualnych filtrow.";
+                }
+                else
+                {
+                    SectionStatusTextBlock.Text = "Lista dokumentow z paginacja po stronie SQL.";
+                }
+            }
+            catch (Exception ex)
+            {
+                if (requestVersion != _filterRequestVersion || _currentSection != NavigationSection.Documents)
+                {
+                    return;
+                }
+
+                SectionPlaceholderBorder.Visibility = Visibility.Visible;
+                DocumentsDataGrid.Visibility = Visibility.Collapsed;
+                DocumentsPaginationPanel.Visibility = Visibility.Collapsed;
+                SectionPlaceholderTextBlock.Text = $"Nie udalo sie pobrac dokumentow. {ex.Message}";
+                SectionStatusTextBlock.Text = "Blad odczytu danych.";
+            }
         }
 
         private async Task LoadProductsAsync(int requestVersion)
@@ -364,10 +531,50 @@ namespace SQLWMS
             }
         }
 
+        private static string GetSelectedFilterValue(ComboBox comboBox)
+        {
+            return comboBox.SelectedItem is ComboBoxItem item
+                ? Convert.ToString(item.Tag) ?? string.Empty
+                : string.Empty;
+        }
+
+        private int GetDocumentsTotalPages()
+        {
+            return Math.Max(1, (int)Math.Ceiling(_documentsTotalCount / (double)DocumentsPageSize));
+        }
+
+        private void UpdateDocumentsPagination()
+        {
+            int totalPages = GetDocumentsTotalPages();
+            DocumentsPaginationTextBlock.Text = $"Strona {_documentsCurrentPage} z {totalPages}";
+            DocumentsResultsTextBlock.Text = _documentsTotalCount == 1
+                ? "1 rekord"
+                : $"{_documentsTotalCount} rekordow";
+            DocumentsPreviousPageButton.IsEnabled = _documentsCurrentPage > 1;
+            DocumentsNextPageButton.IsEnabled = _documentsCurrentPage < totalPages;
+            DocumentsPaginationPanel.Visibility = Visibility.Visible;
+        }
+
+        private void UpdateCurrentUserPresentation()
+        {
+            if (_userSessionService.HasUser)
+            {
+                CurrentUserTextBlock.Text = $"Zalogowany: {_userSessionService.CurrentUser}";
+                LoginButton.Content = "Zmien login";
+                return;
+            }
+
+            CurrentUserTextBlock.Text = "Brak aktywnego uzytkownika";
+            LoginButton.Content = "Zaloguj";
+        }
+
         private void ShowProductsLayout()
         {
+            DocumentsToolbarPanel.Visibility = Visibility.Collapsed;
+            DocumentsPaginationPanel.Visibility = Visibility.Collapsed;
             SectionToolbarPanel.Visibility = Visibility.Visible;
             SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
+            DocumentsDataGrid.Visibility = Visibility.Collapsed;
             ProductsDataGrid.Visibility = Visibility.Visible;
             WarehousesDataGrid.Visibility = Visibility.Collapsed;
             SectionAddressFilterContainer.Visibility = Visibility.Collapsed;
@@ -378,8 +585,11 @@ namespace SQLWMS
 
         private void ShowWarehousesLayout()
         {
+            DocumentsToolbarPanel.Visibility = Visibility.Collapsed;
+            DocumentsPaginationPanel.Visibility = Visibility.Collapsed;
             SectionToolbarPanel.Visibility = Visibility.Visible;
             SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
+            DocumentsDataGrid.Visibility = Visibility.Collapsed;
             ProductsDataGrid.Visibility = Visibility.Collapsed;
             WarehousesDataGrid.Visibility = Visibility.Visible;
             SectionAddressFilterContainer.Visibility = Visibility.Visible;
@@ -388,9 +598,24 @@ namespace SQLWMS
             SectionStatusTextBlock.Text = "Lista magazynow. Rozwin wiersz, aby doladowac sektory.";
         }
 
+        private void ShowDocumentsLayout()
+        {
+            DocumentsToolbarPanel.Visibility = Visibility.Visible;
+            SectionToolbarPanel.Visibility = Visibility.Collapsed;
+            SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
+            DocumentsDataGrid.Visibility = Visibility.Visible;
+            ProductsDataGrid.Visibility = Visibility.Collapsed;
+            WarehousesDataGrid.Visibility = Visibility.Collapsed;
+            DocumentsPaginationPanel.Visibility = Visibility.Visible;
+            SectionStatusTextBlock.Text = "Lista dokumentow z paginacja po stronie SQL.";
+        }
+
         private void ShowPlaceholderLayout(NavigationSection section)
         {
+            DocumentsToolbarPanel.Visibility = Visibility.Collapsed;
             SectionToolbarPanel.Visibility = Visibility.Collapsed;
+            DocumentsPaginationPanel.Visibility = Visibility.Collapsed;
+            DocumentsDataGrid.Visibility = Visibility.Collapsed;
             ProductsDataGrid.Visibility = Visibility.Collapsed;
             WarehousesDataGrid.Visibility = Visibility.Collapsed;
             SectionPlaceholderBorder.Visibility = Visibility.Visible;
@@ -415,7 +640,7 @@ namespace SQLWMS
             return section switch
             {
                 NavigationSection.Documents =>
-                    "Obszar do prowadzenia dokumentow magazynowych oraz kontroli najwazniejszych etapow obiegu.",
+                    "Lista dokumentow magazynowych z filtrowaniem po numerze, typie i statusie oraz z paginacja po stronie SQL.",
                 NavigationSection.Warehouses =>
                     "Lista magazynow z danymi z widoku SBD.MagazynyView. Szczegoly sektorow doladowuja sie dopiero po rozwinieciu wiersza.",
                 NavigationSection.Products =>
@@ -430,6 +655,7 @@ namespace SQLWMS
         {
             return section switch
             {
+                NavigationSection.Documents => "Uzyj filtrow nad tabela, a do przechodzenia pomiedzy stronami skorzystaj z pagera pod lista.",
                 NavigationSection.Warehouses => "Kliknij naglowek kolumny, aby sortowac. Uzyj plusa w pierwszej kolumnie, aby doladowac sektory tylko dla wybranego magazynu.",
                 NavigationSection.Products => "Kliknij naglowek kolumny, aby sortowac. Uzyj plusa w pierwszej kolumnie, aby doladowac warianty tylko dla wybranego towaru.",
                 _ => "Widok zachowuje prosta nawigacje powrotu do panelu glownego."
@@ -440,7 +666,6 @@ namespace SQLWMS
         {
             return section switch
             {
-                NavigationSection.Documents => "Dokumenty zostawilem jeszcze bez podpiecia. Na tym etapie aktywne sa widoki Towary i Magazyny.",
                 NavigationSection.Traceability => "Traceability zostawilem jeszcze bez podpiecia. Na tym etapie aktywne sa widoki Towary i Magazyny.",
                 _ => "Ten widok nie ma jeszcze podlaczonej tabeli."
             };

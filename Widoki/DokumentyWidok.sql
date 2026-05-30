@@ -4,7 +4,7 @@ AS
 	SELECT 
 		--Dane podstawowe
 			d.Id AS Id
-		,	d.Numer AS NumerDokumentu
+		,	d.NumerDokumentu AS NumerDokumentu
 		,	d.TypDokumentu AS TypDokumentu
 		,	d.[Status] AS StatusDokumentu
 		,	d.DataDokumentu AS DataRealizacji

@@ -37,11 +37,17 @@ SET XACT_ABORT ON;
 		IF @ZablokowanyPrzez <> @Operator
 			THROW 51029, N'dokument jest otwarty przez innego u¿ytkownika.', 1
 
+
 		DECLARE @TypDokumentu NVARCHAR(10), @ObecnyStan NVARCHAR(20)
 		
 		SELECT @TypDokumentu = TypDokumentu, @ObecnyStan = [Status]
 			FROM SBD.Dokumenty WHERE Id = @Id
 
+		IF @TypDokumentu IN (N'PM', N'MM') AND EXISTS (SELECT 1 FROM SBD.Dokumenty WHERE Id = @Id AND MagazynDocelowyKod IS NULL)
+			THROW 51029, N'przed zamkniêciem dokumentu nale¿y ustawiæ jego magazyn docelowy.', 1
+
+		IF @TypDokumentu IN (N'WM', N'MM') AND EXISTS (SELECT 1 FROM SBD.Dokumenty WHERE Id = @Id AND MagazynZrodlowyKod IS NULL)
+			THROW 51029, N'przed zamkniêciem dokumentu nale¿y ustawiæ jego magazyn Ÿród³owy.', 1
 
 		IF @ObecnyStan = N'Anulowany' AND @Akcja = N'Anuluj'
 			THROW 51029, N'dokument zosta³ ju¿ anulowany.', 1
@@ -73,7 +79,7 @@ SET XACT_ABORT ON;
 
 		IF @Akcja = N'Usun'
 		BEGIN
-
+			SET NOCOUNT ON;
 
 		END
 

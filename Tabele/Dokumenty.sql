@@ -70,29 +70,6 @@ BEGIN
         CONSTRAINT CK_SBD_Dokumenty_Status
             CHECK ([Status] IN (N'Szkic', N'Zatwierdzony', N'Anulowany')),
 
-        CONSTRAINT CK_SBD_Dokumenty_Kierunek
-            CHECK
-            (
-                (
-                    TypDokumentu = N'PM'
-                    AND MagazynZrodlowyId IS NULL
-                    AND SektorZrodlowyId IS NULL
-                    AND MagazynDocelowyId IS NOT NULL
-                )
-                OR
-                (
-                    TypDokumentu = N'WM'
-                    AND MagazynZrodlowyId IS NOT NULL
-                    AND MagazynDocelowyId IS NULL
-                    AND SektorDocelowyId IS NULL
-                )
-                OR
-                (
-                    TypDokumentu = N'MM'
-                    AND MagazynZrodlowyId IS NOT NULL
-                    AND MagazynDocelowyId IS NOT NULL
-                )
-            )
     );
 END
 GO
