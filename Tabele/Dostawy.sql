@@ -41,7 +41,8 @@ BEGIN
             REFERENCES SBD.Pozycje(Id),
 
         CONSTRAINT CK_SBD_Dostawy_Ilosc
-            CHECK (Ilosc >= 0)
+            CHECK (Ilosc >= 0),
+
     );
 END
 

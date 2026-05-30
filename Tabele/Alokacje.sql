@@ -11,6 +11,8 @@ BEGIN
 
         DostawaId INT NULL,
 
+		Kierunek NVARCHAR(50) NOT NULL DEFAULT(N'Przychod'),
+
         Ilosc DECIMAL(18,6) NOT NULL,
 
         DataUtworzenia DATETIME2(0) NOT NULL
@@ -29,7 +31,10 @@ BEGIN
             REFERENCES SBD.Dostawy(Id),
 
         CONSTRAINT CK_SBD_Alokacje_Ilosc
-            CHECK (Ilosc > 0)
+            CHECK (Ilosc > 0),
+
+		CONSTRAINT CK_SBD_Dostawy_Kierunek
+            CHECK (Kierunek IN (N'Przychód', N'Rozchód'))
     );
 END
 
