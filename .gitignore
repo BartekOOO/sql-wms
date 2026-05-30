@@ -3,3 +3,6 @@
 ################################################################################
 
 /.vs
+/SQLWMS/.vs
+/SQLWMS/SQLWMS/bin/Debug/net10.0-windows
+/SQLWMS/SQLWMS/obj
