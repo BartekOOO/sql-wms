@@ -11,8 +11,8 @@ AS
 		WHERE d.Ilosc > 0
 		GROUP BY TowarId, TowarKod, TowarNazwa, Cecha
 	)
-	SELECT t.Id, t.Nazwa, t.Kod, sm.Cecha, sm.Ilosc FROM SBD.Towary t
-	JOIN StanyMagazynowe sm ON sm.TowarId = t.Id
+	SELECT t.Id, t.Nazwa, t.Kod, ISNULL(sm.Cecha, N'') AS Cecha, ISNULL(sm.Ilosc, 0) AS Ilosc FROM SBD.Towary t
+	LEFT JOIN StanyMagazynowe sm ON sm.TowarId = t.Id
 
 GO
 

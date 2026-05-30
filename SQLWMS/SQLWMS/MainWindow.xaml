@@ -120,6 +120,98 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="SectionActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#224C5A" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#102B34" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SectionExpanderToggleStyle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#CFC1B2" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="2">
+                            <TextBlock x:Name="Glyph"
+                                       Text="+"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Glyph" Property="Text" Value="-" />
+                                <Setter Property="Background" Value="#E6EFED" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#DCE8EA" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="#C6D5D8" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#F2E4D6" />
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FBF2E7" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Grid Background="{StaticResource PageBackgroundBrush}">
@@ -163,9 +255,10 @@
                     </StackPanel>
                 </StackPanel>
 
-                        <StackPanel Grid.Column="1"
-                                Margin="34,2,0,0"
-                                VerticalAlignment="Center">
+                        <StackPanel x:Name="HomeOverviewPanel"
+                                    Grid.Column="1"
+                                    Margin="34,2,0,0"
+                                    VerticalAlignment="Center">
                             <Border Background="#19BE6943"
                                 CornerRadius="12"
                                 Padding="12,5"
@@ -410,8 +503,8 @@
                 </Grid>
 
                 <Grid x:Name="SectionView" Visibility="Collapsed">
-                    <Border Padding="26"
-                            CornerRadius="28"
+                    <Border Padding="20"
+                        CornerRadius="4"
                             Background="#FBF8F3"
                             BorderBrush="#D4C9BA"
                             BorderThickness="1.4">
@@ -420,162 +513,341 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <StackPanel>
-                                <Border Background="#19BE6943"
-                                        CornerRadius="12"
-                                        Padding="12,5"
-                                        HorizontalAlignment="Left">
-                                    <TextBlock x:Name="SectionBadgeTextBlock"
-                                               Foreground="{StaticResource AccentBrush}"
-                                               FontSize="12"
-                                               FontWeight="SemiBold" />
-                                </Border>
-
                                 <TextBlock x:Name="SectionTitleTextBlock"
-                                           Margin="0,16,0,0"
+                                           Margin="0,2,0,0"
                                            Foreground="{StaticResource PrimaryBrush}"
-                                           FontSize="34"
+                                           FontSize="22"
                                            FontWeight="SemiBold"
                                            TextWrapping="Wrap" />
 
                                 <TextBlock x:Name="SectionDescriptionTextBlock"
-                                           Margin="0,14,0,0"
+                                           Margin="0,4,0,0"
                                            Foreground="{StaticResource MutedBrush}"
-                                           FontSize="16"
-                                           LineHeight="25"
+                                           FontSize="12"
+                                           LineHeight="16"
                                            TextWrapping="Wrap" />
                             </StackPanel>
 
-                            <Grid Grid.Row="1" Margin="0,22,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="1.15*" />
-                                    <ColumnDefinition Width="0.85*" />
-                                </Grid.ColumnDefinitions>
+                            <StackPanel x:Name="SectionToolbarPanel"
+                                        Grid.Row="1"
+                                        Margin="0,8,0,0"
+                                        Visibility="Collapsed">
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
 
-                                <Border Margin="0,0,18,0"
-                                        Padding="22"
-                                        CornerRadius="24"
-                                        Background="#EDF3F0">
-                                    <StackPanel>
-                                        <TextBlock Text="Najwazniejsze zadania" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="SemiBold" />
-                                        <TextBlock Margin="0,10,0,0"
-                                                   Text="W tej sekcji uzytkownik przechodzi do glownych operacji i szybciej odnajduje potrzebne informacje. Uklad pozostaje prosty, czytelny i gotowy na dalsza rozbudowe widokow."
-                                                   Foreground="{StaticResource PrimaryBrush}"
-                                                   FontSize="17"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Border>
+                                    <Grid>
+                                        <TextBox x:Name="SectionCodeFilterTextBox"
+                                                 Height="28"
+                                                 Padding="10,6"
+                                                 Background="White"
+                                                 BorderBrush="#D7CCC0"
+                                                 BorderThickness="1.2"
+                                                 FontSize="13"
+                                                 ToolTip="Filtr Kod"
+                                                 TextChanged="SectionFilterTextBox_TextChanged" />
+                                        <TextBlock Margin="12,0,0,0"
+                                                   Foreground="{StaticResource MutedBrush}"
+                                                   FontSize="13"
+                                                   IsHitTestVisible="False"
+                                                   Text="Kod"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Text, ElementName=SectionCodeFilterTextBox}" Value="" />
+                                                                <Condition Binding="{Binding IsKeyboardFocusWithin, ElementName=SectionCodeFilterTextBox}" Value="False" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
 
-                                <Border Grid.Column="1"
-                                        Padding="22"
-                                        CornerRadius="24"
-                                        Background="#1734414B">
-                                    <StackPanel>
-                                        <TextBlock Text="Wybrany obszar" Foreground="#F2C6B2" FontSize="12" FontWeight="SemiBold" />
-                                        <TextBlock x:Name="SectionCardTitleTextBlock"
-                                                   Margin="0,12,0,0"
-                                                   Foreground="White"
-                                                   FontSize="24"
-                                                   FontWeight="SemiBold"
-                                                   TextWrapping="Wrap" />
-                                        <TextBlock Margin="0,10,0,0"
-                                                   Text="Powrot do strony glownej jest zawsze dostepny jednym kliknieciem."
-                                                   Foreground="#D4E0E4"
-                                                   FontSize="14"
-                                                   TextWrapping="Wrap" />
-                                        <Button Margin="0,18,0,0"
-                                                Width="170"
-                                                HorizontalAlignment="Left"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                Click="BackButton_Click"
-                                                Content="Wroc do panelu" />
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
+                                    <Grid Grid.Column="2">
+                                        <TextBox x:Name="SectionNameFilterTextBox"
+                                                 Height="28"
+                                                 Padding="10,6"
+                                                 Background="White"
+                                                 BorderBrush="#D7CCC0"
+                                                 BorderThickness="1.2"
+                                                 FontSize="13"
+                                                 ToolTip="Filtr Nazwa"
+                                                 TextChanged="SectionFilterTextBox_TextChanged" />
+                                        <TextBlock Margin="12,0,0,0"
+                                                   Foreground="{StaticResource MutedBrush}"
+                                                   FontSize="13"
+                                                   IsHitTestVisible="False"
+                                                   Text="Nazwa"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Text, ElementName=SectionNameFilterTextBox}" Value="" />
+                                                                <Condition Binding="{Binding IsKeyboardFocusWithin, ElementName=SectionNameFilterTextBox}" Value="False" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
 
-                            <Grid Grid.Row="2" Margin="0,22,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                                    <Grid Grid.Column="4">
+                                        <TextBox x:Name="SectionAddressFilterTextBox"
+                                                 Height="28"
+                                                 Padding="10,6"
+                                                 Background="White"
+                                                 BorderBrush="#D7CCC0"
+                                                 BorderThickness="1.2"
+                                                 FontSize="13"
+                                                 ToolTip="Filtr Adres"
+                                                 TextChanged="SectionFilterTextBox_TextChanged" />
+                                        <TextBlock Margin="12,0,0,0"
+                                                   Foreground="{StaticResource MutedBrush}"
+                                                   FontSize="13"
+                                                   IsHitTestVisible="False"
+                                                   Text="Adres"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Text, ElementName=SectionAddressFilterTextBox}" Value="" />
+                                                                <Condition Binding="{Binding IsKeyboardFocusWithin, ElementName=SectionAddressFilterTextBox}" Value="False" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
 
-                                <Border Grid.Column="0" Margin="0,0,16,0" Padding="18" CornerRadius="20" Background="{StaticResource CardBrush}">
-                                    <StackPanel>
-                                        <TextBlock Text="Przeglad" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="SemiBold" />
-                                        <TextBlock Margin="0,10,0,0" Text="Czytelna lista i szybkie wyszukiwanie informacji potrzebnych w pracy." Foreground="{StaticResource PrimaryBrush}" FontSize="16" TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Border>
+                                </Grid>
+                            </StackPanel>
 
-                                <Border Grid.Column="1" Margin="0,0,16,0" Padding="18" CornerRadius="20" Background="{StaticResource CardBrush}">
-                                    <StackPanel>
-                                        <TextBlock Text="Operacje" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="SemiBold" />
-                                        <TextBlock Margin="0,10,0,0" Text="Miejsce na najczestsze akcje, formularze i scenariusze obslugi." Foreground="{StaticResource PrimaryBrush}" FontSize="16" TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Border>
+                            <Border Grid.Row="2"
+                                        Margin="0,10,0,0"
+                                        Padding="10"
+                                    CornerRadius="4"
+                                    Background="#EDF3F0"
+                                    BorderBrush="#D6E0DD"
+                                    BorderThickness="1">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
 
-                                <Border Grid.Column="2" Padding="18" CornerRadius="20" Background="{StaticResource CardBrush}">
-                                    <StackPanel>
-                                        <TextBlock Text="Wskazniki" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="SemiBold" />
-                                        <TextBlock x:Name="SectionBackendHintTextBlock"
-                                                   Margin="0,10,0,0"
-                                                   Foreground="{StaticResource PrimaryBrush}"
-                                                   FontSize="16"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
-
-                            <Border Grid.Row="3"
-                                    Margin="0,22,0,0"
-                                    Padding="18,14"
-                                    CornerRadius="18"
-                                    Background="#FFF1E6"
-                                    BorderBrush="#E4C1A7"
-                                    BorderThickness="1.1">
-                                <DockPanel>
-                                    <TextBlock Text="Przeglad sekcji"
-                                               Foreground="{StaticResource AccentBrush}"
-                                               FontWeight="SemiBold"
-                                               DockPanel.Dock="Left" />
-                                    <TextBlock x:Name="SectionFooterTextBlock"
-                                               Margin="14,0,0,0"
+                                    <TextBlock x:Name="SectionStatusTextBlock"
                                                Foreground="{StaticResource PrimaryBrush}"
-                                               TextWrapping="Wrap" />
-                                </DockPanel>
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Text="Wybierz sekcje do podgladu danych." />
+
+                                    <Grid Grid.Row="1" Margin="0,10,0,0">
+                                        <DataGrid x:Name="ProductsDataGrid"
+                                                  AutoGenerateColumns="False"
+                                                  Visibility="Collapsed"
+                                                  IsReadOnly="True"
+                                                  CanUserAddRows="False"
+                                                  CanUserDeleteRows="False"
+                                                  CanUserSortColumns="True"
+                                                  HeadersVisibility="Column"
+                                                  RowHeaderWidth="0"
+                                                  GridLinesVisibility="All"
+                                                  HorizontalGridLinesBrush="#DDE5E3"
+                                                  VerticalGridLinesBrush="#DCCFC0"
+                                                  AlternatingRowBackground="#FFF8F3EA"
+                                                  RowBackground="White"
+                                                  Background="White"
+                                                  BorderBrush="#D6E0DD"
+                                                  BorderThickness="1"
+                                                  RowDetailsVisibilityMode="Visible"
+                                                  SelectionMode="Single"
+                                                  SelectionUnit="FullRow"
+                                                  MinColumnWidth="70">
+                                            <DataGrid.RowDetailsTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="10,0,10,10"
+                                                            Padding="10"
+                                                            Background="#FFF8F3EA"
+                                                            BorderBrush="#DCCFC0"
+                                                            BorderThickness="1"
+                                                            CornerRadius="2">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding DetailStatus}"
+                                                                       Foreground="{StaticResource MutedBrush}"
+                                                                       FontSize="12" />
+                                                            <DataGrid ItemsSource="{Binding Variants}"
+                                                                      Margin="0,8,0,0"
+                                                                      AutoGenerateColumns="False"
+                                                                      IsReadOnly="True"
+                                                                      CanUserAddRows="False"
+                                                                      CanUserDeleteRows="False"
+                                                                      CanUserSortColumns="True"
+                                                                      HeadersVisibility="Column"
+                                                                      RowHeaderWidth="0"
+                                                                      GridLinesVisibility="All"
+                                                                      HorizontalGridLinesBrush="#E5DED5"
+                                                                      VerticalGridLinesBrush="#E5DED5"
+                                                                      AlternatingRowBackground="#FFFDF9F4"
+                                                                      RowBackground="White"
+                                                                      Background="White"
+                                                                      BorderBrush="#E0D5C8"
+                                                                      BorderThickness="1">
+                                                                <DataGrid.Columns>
+                                                                    <DataGridTextColumn Header="Cecha" Binding="{Binding Cecha}" Width="*" />
+                                                                    <DataGridTextColumn Header="Ilosc" Binding="{Binding Ilosc, StringFormat=N2}" Width="120" />
+                                                                </DataGrid.Columns>
+                                                            </DataGrid>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGrid.RowDetailsTemplate>
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Kod" Binding="{Binding Kod}" Width="120" SortMemberPath="Kod" />
+                                                <DataGridTextColumn Header="Nazwa" Binding="{Binding Nazwa}" Width="*" SortMemberPath="Nazwa" />
+                                                <DataGridTextColumn Header="Warianty" Binding="{Binding LiczbaWariantow}" Width="90" SortMemberPath="LiczbaWariantow" />
+                                                <DataGridTextColumn Header="Ilosc" Binding="{Binding SumaIlosci, StringFormat=N2}" Width="110" SortMemberPath="SumaIlosci" />
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+
+                                        <DataGrid x:Name="WarehousesDataGrid"
+                                                  AutoGenerateColumns="False"
+                                                  Visibility="Collapsed"
+                                                  IsReadOnly="True"
+                                                  CanUserAddRows="False"
+                                                  CanUserDeleteRows="False"
+                                                  CanUserSortColumns="True"
+                                                  HeadersVisibility="Column"
+                                                  RowHeaderWidth="0"
+                                                  GridLinesVisibility="All"
+                                                  HorizontalGridLinesBrush="#DDE5E3"
+                                                  VerticalGridLinesBrush="#DCCFC0"
+                                                  AlternatingRowBackground="#FFF8F3EA"
+                                                  RowBackground="White"
+                                                  Background="White"
+                                                  BorderBrush="#D6E0DD"
+                                                  BorderThickness="1"
+                                                  RowDetailsVisibilityMode="Collapsed"
+                                                  SelectionMode="Single"
+                                                  SelectionUnit="FullRow"
+                                                  MinColumnWidth="70">
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                                    <Setter Property="DetailsVisibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                                            <Setter Property="DetailsVisibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.RowStyle>
+                                            <DataGrid.RowDetailsTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="10,0,10,10"
+                                                            Padding="10"
+                                                            Background="#FFF8F3EA"
+                                                            BorderBrush="#DCCFC0"
+                                                            BorderThickness="1"
+                                                            CornerRadius="2">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding DetailStatus}"
+                                                                       Foreground="{StaticResource MutedBrush}"
+                                                                       FontSize="12" />
+                                                            <DataGrid ItemsSource="{Binding Sectors}"
+                                                                      Margin="0,8,0,0"
+                                                                      AutoGenerateColumns="False"
+                                                                      IsReadOnly="True"
+                                                                      CanUserAddRows="False"
+                                                                      CanUserDeleteRows="False"
+                                                                      CanUserSortColumns="True"
+                                                                      HeadersVisibility="Column"
+                                                                      RowHeaderWidth="0"
+                                                                      GridLinesVisibility="All"
+                                                                      HorizontalGridLinesBrush="#E5DED5"
+                                                                      VerticalGridLinesBrush="#E5DED5"
+                                                                      AlternatingRowBackground="#FFFDF9F4"
+                                                                      RowBackground="White"
+                                                                      Background="White"
+                                                                      BorderBrush="#E0D5C8"
+                                                                      BorderThickness="1">
+                                                                <DataGrid.Columns>
+                                                                    <DataGridTextColumn Header="Kod sektora" Binding="{Binding Kod}" Width="180" />
+                                                                    <DataGridTextColumn Header="Nazwa sektora" Binding="{Binding Nazwa}" Width="*" />
+                                                                </DataGrid.Columns>
+                                                            </DataGrid>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGrid.RowDetailsTemplate>
+                                            <DataGrid.Columns>
+                                                <DataGridTemplateColumn Header="" Width="34" IsReadOnly="True">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <ToggleButton Style="{StaticResource SectionExpanderToggleStyle}"
+                                                                          IsChecked="{Binding IsExpanded, Mode=TwoWay}"
+                                                                          Checked="WarehouseExpander_Checked"
+                                                                          Unchecked="MasterExpander_Unchecked" />
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                                <DataGridTextColumn Header="Kod" Binding="{Binding Kod}" Width="100" SortMemberPath="Kod" />
+                                                <DataGridTextColumn Header="Nazwa" Binding="{Binding Nazwa}" Width="220" SortMemberPath="Nazwa" />
+                                                <DataGridTextColumn Header="Adres" Binding="{Binding Adres}" Width="*" SortMemberPath="Adres" />
+                                                <DataGridTextColumn Header="Sektory" Binding="{Binding LiczbaSektorow}" Width="80" SortMemberPath="LiczbaSektorow" />
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+
+                                        <Border x:Name="SectionPlaceholderBorder"
+                                                Visibility="Collapsed"
+                                            Padding="16"
+                                                CornerRadius="4"
+                                                Background="#FFF7F1E8">
+                                            <StackPanel>
+                                                <TextBlock Text="Widok w przygotowaniu"
+                                                           Foreground="{StaticResource AccentBrush}"
+                                                           FontSize="13"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock x:Name="SectionPlaceholderTextBlock"
+                                                           Margin="0,10,0,0"
+                                                           Foreground="{StaticResource PrimaryBrush}"
+                                                           FontSize="16"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </Grid>
                             </Border>
+
+                            <TextBlock x:Name="SectionFooterTextBlock"
+                                       Visibility="Collapsed" />
                         </Grid>
                     </Border>
                 </Grid>
             </Grid>
-
-                <Border Grid.Row="2"
-                    Margin="0,12,0,0"
-                    Padding="16,12"
-                    CornerRadius="18"
-                    Background="#5C173B47">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Text="Obszary: Dokumenty | Magazyny | Towary | Traceability"
-                               Foreground="#F4F6F6"
-                               FontSize="13"
-                               VerticalAlignment="Center"
-                               TextWrapping="Wrap" />
-
-                    <TextBlock x:Name="FooterNavigationTextBlock"
-                               Grid.Column="1"
-                               Foreground="#F4F6F6"
-                               FontSize="13"
-                               VerticalAlignment="Center" />
-                </Grid>
-            </Border>
         </Grid>
     </Grid>
 </Window>
