@@ -15,8 +15,6 @@ BEGIN
 
         ZakladajacaPozycjaId INT NOT NULL,
 
-        NumerPartii NVARCHAR(100) NULL,
-
         Ilosc DECIMAL(18,6) NOT NULL,
 
         DataUtworzenia DATETIME2(0) NOT NULL

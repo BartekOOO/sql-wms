@@ -9,7 +9,7 @@ AS
 		,	d.[Status] AS StatusDokumentu
 		,	d.DataDokumentu AS DataRealizacji
 		,	d.OperatorKod AS OtworzonyPrzez
-		,	CASE WHEN d.DataModyfikacji IS NULL THEN N'Nigdy' ELSE d.DataUtworzenia END AS DataModyfikacji
+		,	CASE WHEN d.DataModyfikacji IS NULL THEN N'Nigdy' ELSE CONVERT(NVARCHAR(19), d.DataModyfikacji, 120) END AS DataModyfikacji
 		,	d.Seria AS SeriaDokumentu
 		,	d.Opis AS OpisDokumentu
 
@@ -24,6 +24,9 @@ AS
 		,	CASE WHEN d.TypDokumentu = N'PM' THEN N'Nie dotyczy' ELSE d.MagazynZrodlowyNazwa END AS MagazynZrodlowyNazwa
 		,	CASE WHEN d.SektorZrodlowyKod IS NULL THEN N'Dowolny' ELSE d.SektorZrodlowyKod END AS SektorZrodlowyKod
 		,	CASE WHEN d.SektorZrodlowyNazwa IS NULL THEN N'Dowolny' ELSE d.SektorZrodlowyNazwa END AS SektorZrodlowyNazwa
+
+		--Techniczne
+		,	d.NumerDokumentuSort AS NumerSortowania
 	FROM SBD.Dokumenty d
 
 GO

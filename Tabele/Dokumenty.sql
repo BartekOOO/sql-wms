@@ -164,3 +164,25 @@ BEGIN
         REFERENCES SBD.Sektory(Id);
 END
 GO
+
+IF OBJECT_ID(N'SBD.Dokumenty', N'U') IS NOT NULL
+AND COL_LENGTH(N'SBD.Dokumenty', N'NumerDokumentuSort') IS NULL
+BEGIN
+    ALTER TABLE SBD.Dokumenty
+    ADD NumerDokumentuSort AS
+    (
+        TypDokumentu
+        + N'-'
+        + RIGHT(REPLICATE(N'0', 10) + CONVERT(NVARCHAR(10), Numer), 10)
+        + N'/'
+        + RIGHT(N'0' + CONVERT(NVARCHAR(2), DATEPART(MONTH, DataDokumentu)), 2)
+        + N'/'
+        + CONVERT(NVARCHAR(4), DATEPART(YEAR, DataDokumentu))
+        + CASE
+            WHEN LTRIM(RTRIM(Seria)) <> N''
+                THEN N'/' + Seria
+            ELSE N''
+          END
+    ) PERSISTED;
+END
+GO
