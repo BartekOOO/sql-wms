@@ -1,0 +1,179 @@
+<Window x:Class="SQLWMS.AppDialogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Komunikat"
+        Width="560"
+        MinWidth="560"
+        MaxWidth="560"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        FontFamily="Bahnschrift"
+        UseLayoutRounding="True">
+    <Window.Resources>
+        <Style x:Key="DialogActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#173B47" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#224C5A" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#102B34" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HeaderCloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#8A8A8A" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#173B47" />
+                                <Setter Property="Background" Value="#11000000" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DropShadowEffect x:Key="DialogShadowEffect"
+                          BlurRadius="28"
+                          ShadowDepth="0"
+                          Color="#3B2012"
+                          Opacity="0.22" />
+    </Window.Resources>
+
+        <Border Margin="14"
+            Background="#FBF8F3"
+            CornerRadius="3"
+            BorderBrush="#D8CEC0"
+            BorderThickness="1"
+            Effect="{StaticResource DialogShadowEffect}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="6" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border x:Name="AccentStripeBorder"
+                    Grid.Row="0"
+                    Background="#BE6943"
+                    CornerRadius="3,3,0,0" />
+
+            <Grid Grid.Row="1"
+                  Margin="0,0,0,6"
+                  MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TitleTextBlock"
+                           Margin="18,16,14,0"
+                           Foreground="#7A7A7A"
+                           FontSize="16"
+                           FontWeight="Medium"
+                           Text="Komunikat" />
+
+                <Button Grid.Column="1"
+                        Width="34"
+                        Height="34"
+                        Margin="0,10,12,0"
+                        VerticalAlignment="Top"
+                        Style="{StaticResource HeaderCloseButtonStyle}"
+                        Click="CloseButton_Click"
+                        Content="X" />
+            </Grid>
+
+            <Grid Grid.Row="2" Margin="24,16,24,22">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="78" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border x:Name="IconBadgeBorder"
+                        Width="56"
+                        Height="56"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Background="#FFF2E8"
+                        BorderBrush="#E7B089"
+                        BorderThickness="1.4"
+                        CornerRadius="6">
+                    <Grid>
+                        <Ellipse Width="30"
+                                 Height="30"
+                                 Fill="#FFD24D"
+                                 Stroke="#C79D12"
+                                 StrokeThickness="1.5" />
+                        <TextBlock x:Name="IconTextBlock"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="#6C4F00"
+                                   FontSize="19"
+                                   FontWeight="Bold"
+                                   Text="!" />
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Column="1" Margin="6,2,0,0">
+                    <TextBlock x:Name="HeadlineTextBlock"
+                               Foreground="#173B47"
+                               FontSize="21"
+                               FontWeight="SemiBold"
+                               Text="Uwaga" />
+                    <TextBlock x:Name="MessageTextBlock"
+                               Margin="0,8,0,0"
+                               Foreground="#173B47"
+                               FontSize="15"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="3"
+                    Background="#F1ECE4"
+                    CornerRadius="0,0,3,3"
+                    Padding="24,16">
+                <Button x:Name="OkButton"
+                        Width="110"
+                        Height="36"
+                        HorizontalAlignment="Right"
+                        IsDefault="True"
+                        Style="{StaticResource DialogActionButtonStyle}"
+                        Click="OkButton_Click"
+                        Content="OK" />
+            </Border>
+        </Grid>
+    </Border>
+</Window>

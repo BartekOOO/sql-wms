@@ -14,16 +14,16 @@ AS
 		,	d.Opis AS OpisDokumentu
 
 		--Magazyn i sektor docelowy
-		,	CASE WHEN d.TypDokumentu = N'WM' THEN N'Nie dotyczy' ELSE d.MagazynDocelowyKod END AS MagazynDocelowyKod
-		,	CASE WHEN d.TypDokumentu = N'WM' THEN N'Nie dotyczy' ELSE MagazynDocelowyNazwa END AS MagazynDocelowyNazwa
-		,	CASE WHEN d.SektorDocelowyKod IS NULL THEN N'Dowolny' ELSE d.SektorDocelowyKod END AS SektorDocelowyKod
-		,	CASE WHEN d.SektorDocelowyNazwa IS NULL THEN N'Dowolny' ELSE d.SektorDocelowyNazwa END AS SektorDocelowyNazwa
+		,	CASE WHEN d.TypDokumentu = N'WM' THEN N'Nie dotyczy' ELSE ISNULL(d.MagazynDocelowyKod, N'Nie ustawiono') END AS MagazynDocelowyKod
+		,	CASE WHEN d.TypDokumentu = N'WM' THEN N'Nie dotyczy' ELSE ISNULL(d.MagazynDocelowyNazwa, N'Nie ustawiono') END AS MagazynDocelowyNazwa
+		,	CASE WHEN d.TypDokumentu = N'WM' THEN N'Nie dotyczy'WHEN d.SektorDocelowyKod IS NULL THEN N'Dowolny' ELSE ISNULL(d.SektorDocelowyKod, N'Nie ustawiono') END AS SektorDocelowyKod
+		,	CASE WHEN d.TypDokumentu = N'WM' THEN N'Nie dotyczy'WHEN d.SektorDocelowyNazwa IS NULL THEN N'Dowolny' ELSE ISNULL(d.SektorDocelowyNazwa, N'Nie ustawiono') END AS SektorDocelowyNazwa
 
 		--Magazyn i sektor Ÿród³owy
-		,	CASE WHEN d.TypDokumentu = N'PM' THEN N'Nie dotyczy' ELSE d.MagazynZrodlowyKod END AS MagazynZrodlowyKod
-		,	CASE WHEN d.TypDokumentu = N'PM' THEN N'Nie dotyczy' ELSE d.MagazynZrodlowyNazwa END AS MagazynZrodlowyNazwa
-		,	CASE WHEN d.SektorZrodlowyKod IS NULL THEN N'Dowolny' ELSE d.SektorZrodlowyKod END AS SektorZrodlowyKod
-		,	CASE WHEN d.SektorZrodlowyNazwa IS NULL THEN N'Dowolny' ELSE d.SektorZrodlowyNazwa END AS SektorZrodlowyNazwa
+		,	CASE WHEN d.TypDokumentu = N'PM' THEN N'Nie dotyczy' ELSE ISNULL(d.MagazynZrodlowyKod, N'Nie ustawiono') END AS MagazynZrodlowyKod
+		,	CASE WHEN d.TypDokumentu = N'PM' THEN N'Nie dotyczy' ELSE ISNULL(d.MagazynZrodlowyNazwa, N'Nie ustawiono') END AS MagazynZrodlowyNazwa
+		,	CASE WHEN d.TypDokumentu = N'PM' THEN N'Nie dotyczy'WHEN d.SektorZrodlowyKod IS NULL THEN N'Dowolny' ELSE ISNULL(d.SektorZrodlowyKod, N'Nie ustawiono') END AS SektorZrodlowyKod
+		,	CASE WHEN d.TypDokumentu = N'PM' THEN N'Nie dotyczy' WHEN d.SektorZrodlowyNazwa IS NULL THEN N'Dowolny' ELSE ISNULL(d.SektorZrodlowyNazwa, N'Nie ustawiono') END AS SektorZrodlowyNazwa
 
 		--Techniczne
 		,	d.NumerDokumentuSort AS NumerSortowania

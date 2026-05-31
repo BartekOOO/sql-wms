@@ -12,6 +12,8 @@ namespace SQLWMS.Services
             command.CommandType = commandType;
             configure?.Invoke(command);
 
+            
+
             await connection.OpenAsync();
             using SqlDataReader reader = await command.ExecuteReaderAsync();
 

@@ -1,0 +1,239 @@
+<Window x:Class="SQLWMS.DocumentWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Dokument"
+        Width="980"
+        Height="700"
+        MinWidth="920"
+        MinHeight="640"
+        ResizeMode="CanMinimize"
+        WindowStyle="None"
+        WindowStartupLocation="CenterOwner"
+        Background="#F2EDE4"
+        FontFamily="Bahnschrift"
+        UseLayoutRounding="True"
+        ShowInTaskbar="False">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#173B47" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#BE6943" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#65757C" />
+
+        <Style x:Key="FooterActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#224C5A" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#102B34" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#DCE8EA" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="#C6D5D8" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="8,7" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="24,20,24,20"
+          MouseLeftButtonDown="RootGrid_MouseLeftButtonDown">
+        <Border Background="#FBF8F3"
+                BorderBrush="#D4C9BA"
+                BorderThickness="1.4"
+                CornerRadius="4"
+                Padding="20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock x:Name="DocumentTitleTextBlock"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontSize="24"
+                               FontWeight="SemiBold" />
+                    <TextBlock x:Name="DocumentSubtitleTextBlock"
+                               Margin="0,6,0,0"
+                               Foreground="{StaticResource MutedBrush}"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Border x:Name="ReadOnlyBannerBorder"
+                        Grid.Row="1"
+                        Margin="0,14,0,0"
+                        Padding="14,10"
+                        Visibility="Collapsed"
+                        CornerRadius="4"
+                        Background="#FFF2E8"
+                        BorderBrush="#E6B28F"
+                        BorderThickness="1">
+                    <TextBlock x:Name="ReadOnlyBannerTextBlock"
+                               Foreground="#8A3B12"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+                </Border>
+
+                <Grid Grid.Row="2" Margin="0,18,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Padding="16"
+                            CornerRadius="4"
+                            Background="#EDF3F0"
+                            BorderBrush="#D6E0DD"
+                            BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Numer dokumentu" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1" x:Name="NumerDokumentuTextBlock" Margin="0,0,18,0" Foreground="{StaticResource PrimaryBrush}" FontSize="14" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="2" Text="Typ dokumentu" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="3" x:Name="TypDokumentuTextBlock" Foreground="{StaticResource PrimaryBrush}" FontSize="14" FontWeight="SemiBold" />
+
+                            <TextBlock Grid.Row="1" Text="Status" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="StatusDokumentuTextBlock" Margin="0,10,18,0" Foreground="{StaticResource PrimaryBrush}" FontSize="14" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Data realizacji" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="1" Grid.Column="3" x:Name="DataRealizacjiTextBlock" Margin="0,10,0,0" Foreground="{StaticResource PrimaryBrush}" FontSize="14" FontWeight="SemiBold" />
+
+                            <TextBlock Grid.Row="2" Text="Magazyn zrodlowy" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="MagazynZrodlowyTextBlock" Margin="0,10,18,0" Foreground="{StaticResource PrimaryBrush}" FontSize="13" />
+                            <TextBlock Grid.Row="2" Grid.Column="2" Text="Sektor zrodlowy" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="2" Grid.Column="3" x:Name="SektorZrodlowyTextBlock" Margin="0,10,0,0" Foreground="{StaticResource PrimaryBrush}" FontSize="13" />
+
+                            <TextBlock Grid.Row="3" Text="Magazyn docelowy" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="MagazynDocelowyTextBlock" Margin="0,10,18,0" Foreground="{StaticResource PrimaryBrush}" FontSize="13" />
+                            <TextBlock Grid.Row="3" Grid.Column="2" Text="Sektor docelowy" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="3" Grid.Column="3" x:Name="SektorDocelowyTextBlock" Margin="0,10,0,0" Foreground="{StaticResource PrimaryBrush}" FontSize="13" />
+
+                            <TextBlock Grid.Row="4" Text="Seria" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="SeriaDokumentuTextBlock" Margin="0,10,18,0" Foreground="{StaticResource PrimaryBrush}" FontSize="13" />
+                            <TextBlock Grid.Row="4" Grid.Column="2" Text="Otworzony przez" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="4" Grid.Column="3" x:Name="OtworzonyPrzezTextBlock" Margin="0,10,0,0" Foreground="{StaticResource PrimaryBrush}" FontSize="13" />
+
+                            <TextBlock Grid.Row="5" Text="Opis" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3" x:Name="OpisDokumentuTextBlock" Margin="0,10,0,0" Foreground="{StaticResource PrimaryBrush}" FontSize="13" TextWrapping="Wrap" />
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1"
+                            Margin="0,14,0,0"
+                            Padding="10"
+                            CornerRadius="4"
+                            Background="#EDF3F0"
+                            BorderBrush="#D6E0DD"
+                            BorderThickness="1">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Pozycje dokumentu"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       FontSize="14"
+                                       FontWeight="SemiBold" />
+
+                            <DataGrid x:Name="DocumentPositionsDataGrid"
+                                      Grid.Row="1"
+                                      Margin="0,10,0,0"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      CanUserSortColumns="False"
+                                      EnableRowVirtualization="False"
+                                      HeadersVisibility="Column"
+                                      RowHeaderWidth="0"
+                                      GridLinesVisibility="All"
+                                      HorizontalGridLinesBrush="#DDE5E3"
+                                      VerticalGridLinesBrush="#DCCFC0"
+                                      AlternatingRowBackground="#FFF8F3EA"
+                                      RowBackground="White"
+                                      Background="White"
+                                      BorderBrush="#D6E0DD"
+                                      BorderThickness="1"
+                                      ScrollViewer.CanContentScroll="False"
+                                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                      MinColumnWidth="0">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Towar" Binding="{Binding TowarKod}" Width="1.1*" />
+                                    <DataGridTextColumn Header="Nazwa" Binding="{Binding TowarNazwa}" Width="2*" />
+                                    <DataGridTextColumn Header="Ilosc" Binding="{Binding IloscJednostkowa, StringFormat=N2}" Width="0.7*" />
+                                    <DataGridTextColumn Header="Jednostka" Binding="{Binding Jednostka}" Width="0.7*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="3"
+                        Margin="0,18,0,0"
+                        Padding="12,10"
+                        CornerRadius="4"
+                        Background="#F6EFE6"
+                        BorderBrush="#D4C9BA"
+                        BorderThickness="1">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="SaveButton"
+                                Width="140"
+                                Height="32"
+                                Style="{StaticResource FooterActionButtonStyle}"
+                                Click="SaveButton_Click"
+                                Content="Zapisz" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

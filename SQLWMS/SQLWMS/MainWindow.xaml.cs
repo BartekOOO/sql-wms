@@ -52,6 +52,8 @@ namespace SQLWMS
             ProductsDataGrid.ItemsSource = _productsView;
             WarehousesDataGrid.ItemsSource = _warehousesView;
 
+            
+
             UpdateCurrentUserPresentation();
             ShowHome();
         }
@@ -111,6 +113,7 @@ namespace SQLWMS
                 if (ReferenceEquals(ProductsDataGrid.SelectedItem, product))
                 {
                     ProductsDataGrid.SelectedItem = null;
+                   
                 }
             }
 
@@ -174,6 +177,74 @@ namespace SQLWMS
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
+            await PromptUserLoginAsync(forcePrompt: true);
+        }
+
+        private async void OpenSelectedDocumentMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (DocumentsDataGrid.SelectedItem is not DocumentListItem selectedDocument)
+            {
+                return;
+            }
+
+            if (!await PromptUserLoginAsync(forcePrompt: false))
+            {
+                return;
+            }
+
+            DocumentProcedureResult openResult = await _documentCatalogService.OpenDocumentAsync(selectedDocument.Id, _userSessionService.CurrentUser);
+            bool isReadOnly = false;
+
+            if (!openResult.IsSuccess)
+            {
+                if (!openResult.IsLockedByOtherUser)
+                {
+                    AppDialogWindow.Show(this, "Otwieranie dokumentu", openResult.Message, AppDialogKind.Warning);
+                    return;
+                }
+
+                isReadOnly = true;
+            }
+
+            DocumentDetailsItem? details = await _documentCatalogService.LoadDocumentDetailsAsync(selectedDocument.Id);
+            if (details is null)
+            {
+                if (openResult.IsSuccess)
+                {
+                    await _documentCatalogService.CloseDocumentAsync(selectedDocument.Id, _userSessionService.CurrentUser);
+                }
+
+                AppDialogWindow.Show(this, "Otwieranie dokumentu", "Nie udalo sie pobrac szczegolow dokumentu.", AppDialogKind.Warning);
+                await ReloadCurrentSectionAsync();
+                return;
+            }
+
+            List<DocumentPositionItem> positions = await _documentCatalogService.LoadDocumentPositionsAsync(selectedDocument.Id);
+            string readOnlyMessage = isReadOnly
+                ? $"Dokument jest zablokowany przez '{details.OtworzonyPrzez}'. Widok tylko do odczytu."
+                : string.Empty;
+
+            DocumentWindow documentWindow = new(
+                details,
+                positions,
+                isReadOnly,
+                readOnlyMessage,
+                () => _documentCatalogService.CloseDocumentAsync(details.Id, _userSessionService.CurrentUser))
+            {
+                Owner = this
+            };
+
+            documentWindow.ShowDialog();
+            await ReloadCurrentSectionAsync();
+        }
+
+        private async Task<bool> PromptUserLoginAsync(bool forcePrompt)
+        {
+            if (!forcePrompt && _userSessionService.HasUser)
+            {
+                return true;
+            }
+
             LoginWindow loginWindow = new(_userSessionService.CurrentUser)
             {
                 Owner = this
@@ -182,7 +253,7 @@ namespace SQLWMS
             bool? result = loginWindow.ShowDialog();
             if (result != true)
             {
-                return;
+                return false;
             }
 
             _userSessionService.SaveCurrentUser(loginWindow.UserName);
@@ -192,6 +263,8 @@ namespace SQLWMS
             {
                 await ReloadCurrentSectionAsync();
             }
+
+            return true;
         }
 
         private async void SectionFilterTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)

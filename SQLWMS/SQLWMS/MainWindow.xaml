@@ -907,7 +907,8 @@
                                                   MinColumnWidth="0">
                                             <DataGrid.ContextMenu>
                                                 <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
-                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Otworz {0}, TargetNullValue=Otworz wybrany dokument, FallbackValue=Otworz wybrany dokument}">
+                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Otworz {0}, TargetNullValue=Otworz wybrany dokument, FallbackValue=Otworz wybrany dokument}"
+                                                              Click="OpenSelectedDocumentMenuItem_Click">
                                                         <MenuItem.Style>
                                                             <Style TargetType="MenuItem">
                                                                 <Setter Property="IsEnabled" Value="True" />
