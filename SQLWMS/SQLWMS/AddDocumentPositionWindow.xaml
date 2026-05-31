@@ -3,10 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Nowa pozycja"
         Width="600"
-        Height="390"
+    Height="430"
         MinWidth="600"
-        MinHeight="390"
+    MinHeight="430"
         ResizeMode="NoResize"
+    WindowStyle="None"
         WindowStartupLocation="CenterOwner"
         Background="#F2EDE4"
         FontFamily="Bahnschrift"
@@ -72,7 +73,8 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="22,18,22,18">
+    <Grid Margin="22,18,22,18"
+          MouseLeftButtonDown="RootGrid_MouseLeftButtonDown">
         <Border Background="#FBF8F3"
                 BorderBrush="#D4C9BA"
                 BorderThickness="1.4"
@@ -92,12 +94,6 @@
                                Foreground="{StaticResource PrimaryBrush}"
                                FontSize="22"
                                FontWeight="SemiBold" />
-                    <TextBlock x:Name="DialogSubtitleTextBlock"
-                               Margin="0,6,0,0"
-                               Text="Wybierz towar, jednostke i ilosc. Cecha jest opcjonalna."
-                               Foreground="{StaticResource MutedBrush}"
-                               FontSize="12"
-                               TextWrapping="Wrap" />
                 </StackPanel>
 
                 <Grid Grid.Row="2" Margin="0,18,0,0">
@@ -176,7 +172,7 @@
                                    FontWeight="SemiBold" />
                         <TextBox x:Name="FeatureTextBox"
                                  Margin="0,8,0,0"
-                                 Height="30"
+                                 Height="34"
                                  Padding="10,4"
                                  Background="White"
                                  BorderBrush="#D7CCC0"

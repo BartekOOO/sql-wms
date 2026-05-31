@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Input;
 using SQLWMS.Models;
 using SQLWMS.Services;
 
@@ -8,23 +9,26 @@ namespace SQLWMS
     public partial class AddDocumentPositionWindow : Window
     {
         private readonly DocumentCatalogService _documentCatalogService;
+        private readonly int? _documentId;
         private readonly DocumentPositionItem? _existingPosition;
+        private readonly string _operatorCode;
 
-        internal AddDocumentPositionWindow(DocumentCatalogService documentCatalogService)
+        internal AddDocumentPositionWindow(DocumentCatalogService documentCatalogService, int documentId, string operatorCode)
         {
             InitializeComponent();
             _documentCatalogService = documentCatalogService;
+            _documentId = documentId;
+            _operatorCode = operatorCode;
 
             Loaded += AddDocumentPositionWindow_Loaded;
         }
 
-        internal AddDocumentPositionWindow(DocumentCatalogService documentCatalogService, DocumentPositionItem existingPosition)
-            : this(documentCatalogService)
+        internal AddDocumentPositionWindow(DocumentCatalogService documentCatalogService, string operatorCode, DocumentPositionItem existingPosition)
+            : this(documentCatalogService, documentId: 0, operatorCode)
         {
             _existingPosition = existingPosition;
 
             DialogTitleTextBlock.Text = "Pozycja dokumentu";
-            DialogSubtitleTextBlock.Text = "Mozesz zmienic towar i ilosc pozycji. Jednostka jest tylko informacyjna.";
             AddButton.Content = "Zapisz pozycje";
             FeaturePanel.Visibility = Visibility.Collapsed;
         }
@@ -116,7 +120,7 @@ namespace SQLWMS
             }
         }
 
-        private void AddButton_Click(object sender, RoutedEventArgs e)
+        private async void AddButton_Click(object sender, RoutedEventArgs e)
         {
             ValidationTextBlock.Text = string.Empty;
 
@@ -142,7 +146,43 @@ namespace SQLWMS
             SelectedProductCode = product.Code;
             SelectedUnitCode = unit.Code;
             Quantity = quantity;
-            DialogResult = true;
+
+            AddButton.IsEnabled = false;
+
+            try
+            {
+                DocumentProcedureResult result = IsEditMode
+                    ? await _documentCatalogService.UpdateDocumentPositionAsync(new DocumentPositionUpdateRequest
+                    {
+                        Id = _existingPosition!.Id,
+                        TowarKod = product.Code,
+                        Ilosc = quantity,
+                        Operator = _operatorCode
+                    })
+                    : await _documentCatalogService.AddDocumentPositionAsync(new DocumentPositionCreateRequest
+                    {
+                        DocumentId = _documentId ?? 0,
+                        TowarKod = product.Code,
+                        Ilosc = quantity,
+                        JednostkaKod = unit.Code,
+                        Cecha = Feature,
+                        Operator = _operatorCode
+                    });
+
+                if (!result.IsSuccess)
+                {
+                    ValidationTextBlock.Text = result.Message;
+                    AddButton.IsEnabled = true;
+                    return;
+                }
+
+                DialogResult = true;
+            }
+            catch (Exception ex)
+            {
+                ValidationTextBlock.Text = ex.Message;
+                AddButton.IsEnabled = true;
+            }
         }
 
         private static bool TryParseQuantity(string value, out decimal quantity)
@@ -154,6 +194,14 @@ namespace SQLWMS
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
+        }
+
+        private void RootGrid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                DragMove();
+            }
         }
     }
 }

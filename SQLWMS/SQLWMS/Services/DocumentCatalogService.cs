@@ -123,41 +123,51 @@ FETCH NEXT @WielkoscStrony ROWS ONLY;";
 
         public async Task<DocumentCreateResult> CreateDocumentAsync(DocumentCreateRequest request)
         {
-            List<DocumentCreateRow> rows = await LoadListAsync(
-                "SBD.ZalozDokument",
-                reader => new DocumentCreateRow
-                {
-                    Message = Convert.ToString(reader["Odpowiedz"]) ?? string.Empty,
-                    ErrorCode = TryGetInt32(reader, "Kod"),
-                    DocumentId = TryGetInt32(reader, "DokumentId"),
-                    DocumentNumber = TryGetString(reader, "DokumentNumer")
-                },
-                command =>
-                {
-                    command.Parameters.Add(new SqlParameter("@TypDokumentu", request.TypDokumentu));
-                    command.Parameters.Add(CreateNullableDateTimeParameter("@DataWystawienia", request.DataWystawienia));
-                    command.Parameters.Add(CreateNullableParameter("@Seria", request.Seria, 20));
-                    command.Parameters.Add(new SqlParameter("@Operator", request.Operator));
-                },
-                CommandType.StoredProcedure);
+            try
+            {
+                List<DocumentCreateRow> rows = await LoadListAsync(
+                    "SBD.ZalozDokument",
+                    reader => new DocumentCreateRow
+                    {
+                        Message = Convert.ToString(reader["Odpowiedz"]) ?? string.Empty,
+                        DocumentId = TryGetInt32(reader, "DokumentId"),
+                        DocumentNumber = TryGetString(reader, "DokumentNumer")
+                    },
+                    command =>
+                    {
+                        command.Parameters.Add(new SqlParameter("@TypDokumentu", request.TypDokumentu));
+                        command.Parameters.Add(CreateNullableDateTimeParameter("@DataWystawienia", request.DataWystawienia));
+                        command.Parameters.Add(CreateNullableParameter("@Seria", request.Seria, 20));
+                        command.Parameters.Add(new SqlParameter("@Operator", request.Operator));
+                    },
+                    CommandType.StoredProcedure);
 
-            DocumentCreateRow? row = rows.FirstOrDefault();
-            if (row is null)
+                DocumentCreateRow? row = rows.FirstOrDefault();
+                if (row is null)
+                {
+                    return new DocumentCreateResult
+                    {
+                        Message = "Brak odpowiedzi z procedury zakladania dokumentu.",
+                        Succeeded = false
+                    };
+                }
+
+                return new DocumentCreateResult
+                {
+                    Message = row.Message,
+                    Succeeded = true,
+                    DocumentId = row.DocumentId,
+                    DocumentNumber = row.DocumentNumber
+                };
+            }
+            catch (SqlException ex)
             {
                 return new DocumentCreateResult
                 {
-                    Message = "Brak odpowiedzi z procedury zakladania dokumentu.",
-                    ErrorCode = -1
+                    Message = ExtractSqlMessage(ex),
+                    Succeeded = false
                 };
             }
-
-            return new DocumentCreateResult
-            {
-                Message = row.Message,
-                ErrorCode = row.ErrorCode,
-                DocumentId = row.DocumentId,
-                DocumentNumber = row.DocumentNumber
-            };
         }
 
         public async Task<DocumentProcedureResult> UpdateDocumentAsync(DocumentUpdateRequest request)
@@ -372,31 +382,48 @@ ORDER BY Id;";
 
         private async Task<DocumentProcedureResult> ExecuteDocumentProcedureAsync(string procedureName, Action<SqlCommand> configure)
         {
-            List<ProcedureResultRow> rows = await LoadListAsync(
-                procedureName,
-                reader => new ProcedureResultRow
-                {
-                    Message = Convert.ToString(reader["Odpowiedz"]) ?? string.Empty,
-                    ErrorCode = TryGetInt32(reader, "Kod")
-                },
-                configure,
-                CommandType.StoredProcedure);
+            try
+            {
+                List<ProcedureResultRow> rows = await LoadListAsync(
+                    procedureName,
+                    reader => new ProcedureResultRow
+                    {
+                        Message = Convert.ToString(reader["Odpowiedz"]) ?? string.Empty
+                    },
+                    configure,
+                    CommandType.StoredProcedure);
 
-            ProcedureResultRow? row = rows.FirstOrDefault();
-            if (row is null)
+                ProcedureResultRow? row = rows.FirstOrDefault();
+                if (row is null)
+                {
+                    return new DocumentProcedureResult
+                    {
+                        Message = "Brak odpowiedzi z procedury.",
+                        Succeeded = false
+                    };
+                }
+
+                return new DocumentProcedureResult
+                {
+                    Message = row.Message,
+                    Succeeded = true
+                };
+            }
+            catch (SqlException ex)
             {
                 return new DocumentProcedureResult
                 {
-                    Message = "Brak odpowiedzi z procedury.",
-                    ErrorCode = -1
+                    Message = ExtractSqlMessage(ex),
+                    Succeeded = false
                 };
             }
+        }
 
-            return new DocumentProcedureResult
-            {
-                Message = row.Message,
-                ErrorCode = row.ErrorCode
-            };
+        private static string ExtractSqlMessage(SqlException ex)
+        {
+            return string.IsNullOrWhiteSpace(ex.Message)
+                ? "Wystapil blad podczas wykonywania procedury SQL."
+                : ex.Message;
         }
 
         private static SqlParameter CreateNullableDateTimeParameter(string name, DateTime? value)
@@ -435,13 +462,11 @@ ORDER BY Id;";
         private sealed class ProcedureResultRow
         {
             public string Message { get; init; } = string.Empty;
-            public int? ErrorCode { get; init; }
         }
 
         private sealed class DocumentCreateRow
         {
             public string Message { get; init; } = string.Empty;
-            public int? ErrorCode { get; init; }
             public int? DocumentId { get; init; }
             public string DocumentNumber { get; init; } = string.Empty;
         }

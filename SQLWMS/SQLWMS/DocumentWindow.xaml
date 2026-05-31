@@ -391,11 +391,18 @@
                         BorderBrush="#D4C9BA"
                         BorderThickness="1">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button x:Name="DocumentActionButton"
+                    <Button x:Name="SecondaryDocumentActionButton"
                         Width="150"
                         Height="32"
                         Margin="0,0,10,0"
                         Style="{StaticResource GhostActionButtonStyle}"
+                        Click="DocumentActionButton_Click"
+                        Visibility="Collapsed" />
+                    <Button x:Name="DocumentActionButton"
+                        Width="170"
+                        Height="32"
+                        Margin="0,0,10,0"
+                        Style="{StaticResource FooterActionButtonStyle}"
                         Click="DocumentActionButton_Click"
                         Visibility="Collapsed" />
                         <Button x:Name="SaveButton"

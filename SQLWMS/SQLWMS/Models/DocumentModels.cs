@@ -60,10 +60,10 @@ namespace SQLWMS.Models
     internal sealed class DocumentCreateResult
     {
         public string Message { get; init; } = string.Empty;
-        public int? ErrorCode { get; init; }
+        public bool Succeeded { get; init; }
         public int? DocumentId { get; init; }
         public string DocumentNumber { get; init; } = string.Empty;
-        public bool IsSuccess => ErrorCode is null;
+        public bool IsSuccess => Succeeded;
     }
 
     internal sealed class DocumentUpdateRequest
@@ -130,8 +130,8 @@ namespace SQLWMS.Models
     internal sealed class DocumentProcedureResult
     {
         public string Message { get; init; } = string.Empty;
-        public int? ErrorCode { get; init; }
-        public bool IsSuccess => ErrorCode is null;
-        public bool IsLockedByOtherUser => ErrorCode.HasValue && Message.Contains("zablokowany przez", StringComparison.OrdinalIgnoreCase);
+        public bool Succeeded { get; init; }
+        public bool IsSuccess => Succeeded;
+        public bool IsLockedByOtherUser => !Succeeded && Message.Contains("zablokowany przez", StringComparison.OrdinalIgnoreCase);
     }
 }

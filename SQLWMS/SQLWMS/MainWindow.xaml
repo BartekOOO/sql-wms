@@ -903,7 +903,6 @@
                                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                                   SelectionMode="Single"
                                                   SelectionUnit="FullRow"
-                                                  MouseDoubleClick="DocumentsDataGrid_MouseDoubleClick"
                                                   PreviewMouseRightButtonDown="DocumentsDataGrid_PreviewMouseRightButtonDown"
                                                   MinColumnWidth="0">
                                             <DataGrid.ContextMenu>

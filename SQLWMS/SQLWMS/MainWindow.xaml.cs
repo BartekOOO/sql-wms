@@ -27,6 +27,7 @@ namespace SQLWMS
         private readonly ICollectionView _documentsView;
         private readonly ICollectionView _productsView;
         private readonly ICollectionView _warehousesView;
+        private bool _isOpeningDocument;
         private int _documentsCurrentPage = 1;
         private int _documentsTotalCount;
         private int _filterRequestVersion;
@@ -143,16 +144,6 @@ namespace SQLWMS
             }
         }
 
-        private async void DocumentsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (FindVisualParent<DataGridRow>(e.OriginalSource as DependencyObject) is null)
-            {
-                return;
-            }
-
-            await OpenSelectedDocumentFromGridAsync();
-        }
-
         private async void DocumentsDataGridRow_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (sender is DataGridRow row)
@@ -161,6 +152,7 @@ namespace SQLWMS
                 row.Focus();
             }
 
+            e.Handled = true;
             await OpenSelectedDocumentFromGridAsync();
         }
 
@@ -467,7 +459,7 @@ namespace SQLWMS
                 }
                 else
                 {
-                    SectionStatusTextBlock.Text = "Lista dokumentow z paginacja po stronie SQL.";
+                    SectionStatusTextBlock.Text = string.Empty;
                 }
             }
             catch (Exception ex)
@@ -643,6 +635,11 @@ namespace SQLWMS
 
         private async Task OpenSelectedDocumentFromGridAsync()
         {
+            if (_isOpeningDocument)
+            {
+                return;
+            }
+
             if (DocumentsDataGrid.SelectedItem is not DocumentListItem selectedDocument)
             {
                 return;
@@ -653,7 +650,15 @@ namespace SQLWMS
                 return;
             }
 
-            await OpenDocumentAsync(selectedDocument.Id);
+            _isOpeningDocument = true;
+            try
+            {
+                await OpenDocumentAsync(selectedDocument.Id);
+            }
+            finally
+            {
+                _isOpeningDocument = false;
+            }
         }
 
         private async Task OpenDocumentAsync(int documentId)
@@ -801,7 +806,7 @@ namespace SQLWMS
             ProductsDataGrid.Visibility = Visibility.Collapsed;
             WarehousesDataGrid.Visibility = Visibility.Collapsed;
             DocumentsPaginationPanel.Visibility = Visibility.Visible;
-            SectionStatusTextBlock.Text = "Lista dokumentow z paginacja po stronie SQL.";
+            SectionStatusTextBlock.Text = string.Empty;
         }
 
         private void ShowPlaceholderLayout(NavigationSection section)

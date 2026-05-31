@@ -2,9 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Komunikat"
-        Width="560"
-        MinWidth="560"
-        MaxWidth="560"
+    Width="500"
+    MinWidth="500"
+    MaxWidth="500"
         SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStyle="None"
@@ -18,14 +18,18 @@
         <Style x:Key="DialogActionButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#173B47" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#173B47" />
             <Setter Property="Padding" Value="16,8" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -39,6 +43,12 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <Style x:Key="DialogGhostButtonStyle" TargetType="Button" BasedOn="{StaticResource DialogActionButtonStyle}">
+            <Setter Property="Background" Value="#FBF8F3" />
+            <Setter Property="Foreground" Value="#173B47" />
+            <Setter Property="BorderBrush" Value="#CDBEAD" />
         </Style>
 
         <Style x:Key="HeaderCloseButtonStyle" TargetType="Button">
@@ -66,33 +76,27 @@
         </Style>
 
         <DropShadowEffect x:Key="DialogShadowEffect"
-                          BlurRadius="28"
+                          BlurRadius="22"
                           ShadowDepth="0"
                           Color="#3B2012"
-                          Opacity="0.22" />
+                          Opacity="0.18" />
     </Window.Resources>
 
-        <Border Margin="14"
+    <Border Margin="12"
             Background="#FBF8F3"
-            CornerRadius="3"
+            CornerRadius="6"
             BorderBrush="#D8CEC0"
             BorderThickness="1"
             Effect="{StaticResource DialogShadowEffect}">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="6" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Border x:Name="AccentStripeBorder"
-                    Grid.Row="0"
-                    Background="#BE6943"
-                    CornerRadius="3,3,0,0" />
-
-            <Grid Grid.Row="1"
-                  Margin="0,0,0,6"
+            <Grid Grid.Row="0"
+                  Margin="0,0,0,2"
                   MouseLeftButtonDown="Header_MouseLeftButtonDown">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -101,9 +105,9 @@
 
                 <TextBlock x:Name="TitleTextBlock"
                            Margin="18,16,14,0"
-                           Foreground="#7A7A7A"
+                           Foreground="#173B47"
                            FontSize="16"
-                           FontWeight="Medium"
+                           FontWeight="SemiBold"
                            Text="Komunikat" />
 
                 <Button Grid.Column="1"
@@ -116,32 +120,27 @@
                         Content="X" />
             </Grid>
 
-            <Grid Grid.Row="2" Margin="24,16,24,22">
+            <Grid Grid.Row="1" Margin="22,14,22,18">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="78" />
+                    <ColumnDefinition Width="54" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <Border x:Name="IconBadgeBorder"
-                        Width="56"
-                        Height="56"
+                        Width="38"
+                        Height="38"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
                         Background="#FFF2E8"
                         BorderBrush="#E7B089"
-                        BorderThickness="1.4"
-                        CornerRadius="6">
+                        BorderThickness="1"
+                        CornerRadius="19">
                     <Grid>
-                        <Ellipse Width="30"
-                                 Height="30"
-                                 Fill="#FFD24D"
-                                 Stroke="#C79D12"
-                                 StrokeThickness="1.5" />
                         <TextBlock x:Name="IconTextBlock"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
                                    Foreground="#6C4F00"
-                                   FontSize="19"
+                                   FontSize="18"
                                    FontWeight="Bold"
                                    Text="!" />
                     </Grid>
@@ -150,29 +149,39 @@
                 <StackPanel Grid.Column="1" Margin="6,2,0,0">
                     <TextBlock x:Name="HeadlineTextBlock"
                                Foreground="#173B47"
-                               FontSize="21"
+                               FontSize="18"
                                FontWeight="SemiBold"
                                Text="Uwaga" />
                     <TextBlock x:Name="MessageTextBlock"
-                               Margin="0,8,0,0"
-                               Foreground="#173B47"
-                               FontSize="15"
+                               Margin="0,6,0,0"
+                               Foreground="#324B55"
+                               FontSize="14"
                                TextWrapping="Wrap" />
                 </StackPanel>
             </Grid>
 
-            <Border Grid.Row="3"
-                    Background="#F1ECE4"
-                    CornerRadius="0,0,3,3"
-                    Padding="24,16">
-                <Button x:Name="OkButton"
-                        Width="110"
-                        Height="36"
-                        HorizontalAlignment="Right"
-                        IsDefault="True"
-                        Style="{StaticResource DialogActionButtonStyle}"
-                        Click="OkButton_Click"
-                        Content="OK" />
+            <Border Grid.Row="2"
+                    Background="#F4EFE7"
+                    CornerRadius="0,0,6,6"
+                    Padding="18,14">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="SecondaryButton"
+                            Width="108"
+                            Height="34"
+                            Margin="0,0,10,0"
+                            Visibility="Collapsed"
+                            Style="{StaticResource DialogGhostButtonStyle}"
+                            Click="SecondaryButton_Click"
+                            Content="Anuluj" />
+                    <Button x:Name="OkButton"
+                            Width="128"
+                            Height="34"
+                            HorizontalAlignment="Right"
+                            IsDefault="True"
+                            Style="{StaticResource DialogActionButtonStyle}"
+                            Click="OkButton_Click"
+                            Content="OK" />
+                </StackPanel>
             </Border>
         </Grid>
     </Border>

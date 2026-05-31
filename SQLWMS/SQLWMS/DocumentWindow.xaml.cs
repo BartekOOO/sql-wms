@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using SQLWMS.Models;
 using SQLWMS.Services;
 
@@ -110,7 +111,7 @@ namespace SQLWMS
                 {
                     _suppressAutoPersist = false;
                     SaveButton.IsEnabled = true;
-                    DocumentActionButton.IsEnabled = true;
+                    SetDocumentActionButtonsEnabled(true);
                     return;
                 }
 
@@ -122,7 +123,7 @@ namespace SQLWMS
                     _suppressAutoPersist = false;
                     AppDialogWindow.Show(this, "Zamykanie dokumentu", closeResult.Message, AppDialogKind.Warning);
                     SaveButton.IsEnabled = true;
-                    DocumentActionButton.IsEnabled = true;
+                    SetDocumentActionButtonsEnabled(true);
                     return;
                 }
 
@@ -134,33 +135,29 @@ namespace SQLWMS
                 _suppressAutoPersist = false;
                 AppDialogWindow.Show(this, "Edycja dokumentu", ex.Message, AppDialogKind.Error);
                 SaveButton.IsEnabled = true;
-                DocumentActionButton.IsEnabled = true;
+                SetDocumentActionButtonsEnabled(true);
             }
         }
 
         private async void DocumentActionButton_Click(object sender, RoutedEventArgs e)
         {
-            string? action = GetDocumentAction();
+            string? action = (sender as System.Windows.Controls.Button)?.Tag as string;
             if (_isReadOnlyMode || string.IsNullOrWhiteSpace(action))
+            {
+                return;
+            }
+
+            if (!ConfirmDocumentAction(action))
             {
                 return;
             }
 
             _suppressAutoPersist = true;
             SaveButton.IsEnabled = false;
-            DocumentActionButton.IsEnabled = false;
+            SetDocumentActionButtonsEnabled(false);
 
             try
             {
-                bool updateSucceeded = await PersistDocumentChangesAsync(force: true, showErrors: true);
-                if (!updateSucceeded)
-                {
-                    _suppressAutoPersist = false;
-                    SaveButton.IsEnabled = true;
-                    DocumentActionButton.IsEnabled = true;
-                    return;
-                }
-
                 _isFinalizing = true;
                 DocumentProcedureResult actionResult = await _documentCatalogService.CloseDocumentAsync(_documentId, _operatorCode, action);
                 if (!actionResult.IsSuccess)
@@ -169,7 +166,7 @@ namespace SQLWMS
                     _suppressAutoPersist = false;
                     AppDialogWindow.Show(this, "Zamykanie dokumentu", actionResult.Message, AppDialogKind.Warning);
                     SaveButton.IsEnabled = true;
-                    DocumentActionButton.IsEnabled = true;
+                    SetDocumentActionButtonsEnabled(true);
                     return;
                 }
 
@@ -181,13 +178,13 @@ namespace SQLWMS
                 _suppressAutoPersist = false;
                 AppDialogWindow.Show(this, "Zamykanie dokumentu", ex.Message, AppDialogKind.Error);
                 SaveButton.IsEnabled = true;
-                DocumentActionButton.IsEnabled = true;
+                SetDocumentActionButtonsEnabled(true);
             }
         }
 
         private async void AddPositionMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            AddDocumentPositionWindow addPositionWindow = new(_documentCatalogService)
+            AddDocumentPositionWindow addPositionWindow = new(_documentCatalogService, _documentId, _operatorCode)
             {
                 Owner = this
             };
@@ -198,30 +195,7 @@ namespace SQLWMS
                 return;
             }
 
-            try
-            {
-                DocumentProcedureResult addResult = await _documentCatalogService.AddDocumentPositionAsync(new DocumentPositionCreateRequest
-                {
-                    DocumentId = _documentId,
-                    TowarKod = addPositionWindow.SelectedProductCode,
-                    Ilosc = addPositionWindow.Quantity,
-                    JednostkaKod = addPositionWindow.SelectedUnitCode,
-                    Cecha = addPositionWindow.Feature,
-                    Operator = _operatorCode
-                });
-
-                if (!addResult.IsSuccess)
-                {
-                    AppDialogWindow.Show(this, "Dodawanie pozycji", addResult.Message, AppDialogKind.Warning);
-                    return;
-                }
-
-                await ReloadPositionsAsync();
-            }
-            catch (Exception ex)
-            {
-                AppDialogWindow.Show(this, "Dodawanie pozycji", ex.Message, AppDialogKind.Error);
-            }
+            await ReloadPositionsAsync();
         }
 
         private async void OpenPositionMenuItem_Click(object sender, RoutedEventArgs e)
@@ -231,7 +205,7 @@ namespace SQLWMS
                 return;
             }
 
-            AddDocumentPositionWindow positionWindow = new(_documentCatalogService, selectedPosition)
+            AddDocumentPositionWindow positionWindow = new(_documentCatalogService, _operatorCode, selectedPosition)
             {
                 Owner = this
             };
@@ -242,28 +216,7 @@ namespace SQLWMS
                 return;
             }
 
-            try
-            {
-                DocumentProcedureResult updateResult = await _documentCatalogService.UpdateDocumentPositionAsync(new DocumentPositionUpdateRequest
-                {
-                    Id = selectedPosition.Id,
-                    TowarKod = positionWindow.SelectedProductCode,
-                    Ilosc = positionWindow.Quantity,
-                    Operator = _operatorCode
-                });
-
-                if (!updateResult.IsSuccess)
-                {
-                    AppDialogWindow.Show(this, "Edycja pozycji", updateResult.Message, AppDialogKind.Warning);
-                    return;
-                }
-
-                await ReloadPositionsAsync();
-            }
-            catch (Exception ex)
-            {
-                AppDialogWindow.Show(this, "Edycja pozycji", ex.Message, AppDialogKind.Error);
-            }
+            await ReloadPositionsAsync();
         }
 
         private async void DeletePositionMenuItem_Click(object sender, RoutedEventArgs e)
@@ -304,16 +257,21 @@ namespace SQLWMS
             _suppressAutoPersist = true;
             _allowClose = true;
             Closing -= DocumentWindow_Closing;
-
-            try
+            Dispatcher.BeginInvoke(() =>
             {
-                DialogResult = dialogResult;
-            }
-            catch (InvalidOperationException)
-            {
-            }
+                try
+                {
+                    DialogResult = dialogResult;
+                }
+                catch (InvalidOperationException)
+                {
+                }
 
-            Close();
+                if (IsVisible)
+                {
+                    Close();
+                }
+            }, DispatcherPriority.Normal);
         }
 
         private void RootGrid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -473,7 +431,7 @@ namespace SQLWMS
             DestinationWarehouseComboBox.IsEnabled = canEditDestination;
             DestinationSectorComboBox.IsEnabled = canEditDestination && DestinationWarehouseComboBox.SelectedValue is not null;
             DestinationSectorClearButton.IsEnabled = canEditDestination && DestinationSectorComboBox.IsEnabled && DestinationSectorComboBox.SelectedItem is not null;
-            ConfigureDocumentActionButton(canEdit);
+            ConfigureDocumentActionButtons(canEdit);
             SaveButton.Content = canEdit ? "Zapisz i zamknij" : "Zamknij";
         }
 
@@ -685,28 +643,76 @@ namespace SQLWMS
                 && DestinationSectorComboBox.SelectedItem is not null;
         }
 
-        private void ConfigureDocumentActionButton(bool canEdit)
+        private void ConfigureDocumentActionButtons(bool canEdit)
         {
-            string? action = GetDocumentAction();
-            if (!canEdit || string.IsNullOrWhiteSpace(action))
+            HideDocumentActionButtons();
+            if (!canEdit)
             {
-                DocumentActionButton.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            DocumentActionButton.Content = action == "Usun" ? "Usun dokument" : "Anuluj dokument";
-            DocumentActionButton.Visibility = Visibility.Visible;
-            DocumentActionButton.IsEnabled = true;
+            switch (_documentStatus)
+            {
+                case "Szkic":
+                    ConfigureDocumentActionButton(SecondaryDocumentActionButton, "Usun", "Usun dokument");
+                    ConfigureDocumentActionButton(DocumentActionButton, "Zatwierdz", "Zatwierdz dokument");
+                    break;
+
+                case "Zatwierdzony":
+                    ConfigureDocumentActionButton(DocumentActionButton, "Anuluj", "Anuluj dokument");
+                    break;
+            }
         }
 
-        private string? GetDocumentAction()
+        private void ConfigureDocumentActionButton(System.Windows.Controls.Button button, string action, string content)
         {
-            return _documentStatus switch
+            button.Tag = action;
+            button.Content = content;
+            button.Visibility = Visibility.Visible;
+            button.IsEnabled = true;
+        }
+
+        private void HideDocumentActionButtons()
+        {
+            SecondaryDocumentActionButton.Visibility = Visibility.Collapsed;
+            SecondaryDocumentActionButton.Tag = null;
+            DocumentActionButton.Visibility = Visibility.Collapsed;
+            DocumentActionButton.Tag = null;
+        }
+
+        private void SetDocumentActionButtonsEnabled(bool isEnabled)
+        {
+            DocumentActionButton.IsEnabled = isEnabled && DocumentActionButton.Visibility == Visibility.Visible;
+            SecondaryDocumentActionButton.IsEnabled = isEnabled && SecondaryDocumentActionButton.Visibility == Visibility.Visible;
+        }
+
+        private bool ConfirmDocumentAction(string action)
+        {
+            string title = action switch
             {
-                "Szkic" => "Usun",
-                "Zatwierdzony" => "Anuluj",
-                _ => null
+                "Usun" => "Usuwanie dokumentu",
+                "Zatwierdz" => "Zatwierdzanie dokumentu",
+                "Anuluj" => "Anulowanie dokumentu",
+                _ => "Potwierdzenie akcji"
             };
+
+            string message = action switch
+            {
+                "Usun" => "Czy na pewno chcesz usunac ten dokument?",
+                "Zatwierdz" => "Czy na pewno chcesz zatwierdzic ten dokument?",
+                "Anuluj" => "Czy na pewno chcesz anulowac ten dokument?",
+                _ => "Czy na pewno chcesz wykonac te akcje?"
+            };
+
+            string confirmText = action switch
+            {
+                "Usun" => "Usun",
+                "Zatwierdz" => "Zatwierdz",
+                "Anuluj" => "Anuluj",
+                _ => "Potwierdz"
+            };
+
+            return AppDialogWindow.Confirm(this, title, message, confirmText, "Nie", AppDialogKind.Warning);
         }
 
         private static T? FindVisualParent<T>(DependencyObject? source)
