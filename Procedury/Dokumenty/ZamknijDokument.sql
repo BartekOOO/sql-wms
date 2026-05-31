@@ -37,16 +37,15 @@ SET XACT_ABORT ON;
 		IF @ZablokowanyPrzez <> @Operator
 			THROW 51029, N'dokument jest otwarty przez innego u¿ytkownika.', 1
 
-
 		DECLARE @TypDokumentu NVARCHAR(10), @ObecnyStan NVARCHAR(20)
 		
 		SELECT @TypDokumentu = TypDokumentu, @ObecnyStan = [Status]
 			FROM SBD.Dokumenty WHERE Id = @Id
 
-		IF @TypDokumentu IN (N'PM', N'MM') AND EXISTS (SELECT 1 FROM SBD.Dokumenty WHERE Id = @Id AND MagazynDocelowyKod IS NULL)
+		IF @Akcja <> N'Usun' AND @TypDokumentu IN (N'PM', N'MM') AND EXISTS (SELECT 1 FROM SBD.Dokumenty WHERE Id = @Id AND MagazynDocelowyKod IS NULL)
 			THROW 51029, N'przed zamkniêciem dokumentu nale¿y ustawiæ jego magazyn docelowy.', 1
 
-		IF @TypDokumentu IN (N'WM', N'MM') AND EXISTS (SELECT 1 FROM SBD.Dokumenty WHERE Id = @Id AND MagazynZrodlowyKod IS NULL)
+		IF @Akcja <> N'Usun' AND @TypDokumentu IN (N'WM', N'MM') AND EXISTS (SELECT 1 FROM SBD.Dokumenty WHERE Id = @Id AND MagazynZrodlowyKod IS NULL)
 			THROW 51029, N'przed zamkniêciem dokumentu nale¿y ustawiæ jego magazyn Ÿród³owy.', 1
 
 		IF @ObecnyStan = N'Anulowany' AND @Akcja = N'Anuluj'
@@ -78,12 +77,15 @@ SET XACT_ABORT ON;
 		END
 
 		IF @Akcja = N'Usun'
-		BEGIN
-			SET NOCOUNT ON;
-
+			BEGIN
+				DELETE FROM SBD.Dokumenty WHERE Id = @Id
+				DELETE FROM SBD.Pozycje WHERE DokumentId = @Id
+				DELETE FROM SBD.Alokacje WHERE DokumentId = @Id
+			END
+		ELSE
+			BEGIN
+				UPDATE SBD.Dokumenty SET OperatorKod = NULL WHERE Id = @Id
 		END
-
-		UPDATE SBD.Dokumenty SET OperatorKod = NULL WHERE Id = @Id
 
 		IF @StartedTran = 1
 			COMMIT TRAN;
@@ -104,7 +106,14 @@ SET XACT_ABORT ON;
 		IF @StartedTran = 1 AND @@TRANCOUNT > 0
             ROLLBACK TRAN;
 
-		SELECT CONCAT(N'Wyst¹pi³ b³¹d w trakcie zamykania dokumentu - ', ERROR_MESSAGE()) AS Odpowiedz, ERROR_NUMBER() AS Kod
+		DECLARE @ErrorMessage NVARCHAR(4000);
+
+		SET @ErrorMessage = CONCAT(
+		    N'Wyst¹pi³ b³¹d w trakcie zamykania dokumentu - ',
+		    ERROR_MESSAGE()
+		);
+
+		THROW 51029, @ErrorMessage, 1;
 	
 	END CATCH
 END

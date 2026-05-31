@@ -37,7 +37,14 @@ SET XACT_ABORT ON;
 		IF @StartedTran = 1 AND @@TRANCOUNT > 0
             ROLLBACK TRAN;
 
-		SELECT CONCAT(N'Wyst¹pi³ b³¹d w trakcie usuwania pozycji - ', ERROR_MESSAGE()) AS Odpowiedz, ERROR_NUMBER() AS Kod
+		DECLARE @ErrorMessage NVARCHAR(4000);
+
+		SET @ErrorMessage = CONCAT(
+		    N'Wyst¹pi³ b³¹d w trakcie usuwania pozycji - ',
+		    ERROR_MESSAGE()
+		);
+
+		THROW 51029, @ErrorMessage, 1;
 	
 	END CATCH
 END

@@ -94,7 +94,7 @@ SET XACT_ABORT ON;
 
 
 
-		IF @MagazynZrodlowy IS NOT NULL AND @MagazynZrodlowy <> @StaryMagazynZrodlowy
+		IF @MagazynZrodlowy IS NOT NULL AND @MagazynZrodlowy <> ISNULL(@StaryMagazynZrodlowy, N'')
 		BEGIN
 			SET @AnyChanged = 1;
 			IF NOT EXISTS (SELECT 1 FROM SBD.Magazyny WHERE Kod = @MagazynZrodlowy)
@@ -110,7 +110,7 @@ SET XACT_ABORT ON;
 
 		END
 
-		IF @SektorZrodlowy IS NOT NULL AND @SektorZrodlowy <> @StarySektorZrodlowy
+		IF @SektorZrodlowy IS NOT NULL AND @SektorZrodlowy <> ISNULL(@StarySektorZrodlowy, N'')
 		BEGIN
 			SET @AnyChanged = 1;
 			IF @SektorZrodlowy <> SBD.DajKluczOdpiecia() AND NOT EXISTS (SELECT 1 FROM SBD.Sektory WHERE Kod = @SektorZrodlowy)
@@ -137,7 +137,7 @@ SET XACT_ABORT ON;
 				END
 		END
 
-		IF @MagazynDocelowy IS NOT NULL AND @MagazynDocelowy <> @StaryMagazynDocelowy
+		IF @MagazynDocelowy IS NOT NULL AND @MagazynDocelowy <> ISNULL(@StaryMagazynDocelowy, N'')
 		BEGIN
 			SET @AnyChanged = 1;
 			IF NOT EXISTS (SELECT 1 FROM SBD.Magazyny WHERE Kod = @MagazynDocelowy)
@@ -153,7 +153,7 @@ SET XACT_ABORT ON;
 
 		END
 
-		IF @SektorDocelowy IS NOT NULL AND @SektorDocelowy <> @StarySektorDocelowy
+		IF @SektorDocelowy IS NOT NULL AND @SektorDocelowy <> ISNULL(@StarySektorDocelowy, N'')
 		BEGIN
 			SET @AnyChanged = 1;
 			IF @SektorDocelowy <> SBD.DajKluczOdpiecia() AND NOT EXISTS (SELECT 1 FROM SBD.Sektory WHERE Kod = @SektorDocelowy)
@@ -205,15 +205,16 @@ SET XACT_ABORT ON;
 		IF @StartedTran = 1 AND @@TRANCOUNT > 0
             ROLLBACK TRAN;
 
-		SELECT CONCAT(N'Wyst¹pi³ b³¹d w trakcie edytowania dokumentu - ', ERROR_MESSAGE()) AS Odpowiedz, ERROR_NUMBER() AS Kod
+		DECLARE @ErrorMessage NVARCHAR(4000);
+
+		SET @ErrorMessage = CONCAT(
+		    N'Wyst¹pi³ b³¹d w trakcie edytowania dokumentu - ',
+		    ERROR_MESSAGE()
+		);
+
+		THROW 51029, @ErrorMessage, 1;
 	
 	END CATCH
 END
 GO
 
-
-SELECT * FROM SBD.Dokumenty
-
-select * from SBD.Dokumenty
-
-SELECT * FROM SBD.Magazyny

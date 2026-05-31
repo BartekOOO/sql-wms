@@ -1,0 +1,221 @@
+<Window x:Class="SQLWMS.AddDocumentPositionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Nowa pozycja"
+        Width="600"
+        Height="390"
+        MinWidth="600"
+        MinHeight="390"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="#F2EDE4"
+        FontFamily="Bahnschrift"
+        UseLayoutRounding="True"
+        ShowInTaskbar="False">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#173B47" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#BE6943" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#65757C" />
+
+        <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#224C5A" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#102B34" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DialogGhostButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#12FFFFFF" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="#284F5D" />
+            <Setter Property="BorderThickness" Value="1.2" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#18FFFFFF" />
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="22,18,22,18">
+        <Border Background="#FBF8F3"
+                BorderBrush="#D4C9BA"
+                BorderThickness="1.4"
+                CornerRadius="4"
+                Padding="20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock x:Name="DialogTitleTextBlock"
+                               Text="Nowa pozycja dokumentu"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontSize="22"
+                               FontWeight="SemiBold" />
+                    <TextBlock x:Name="DialogSubtitleTextBlock"
+                               Margin="0,6,0,0"
+                               Text="Wybierz towar, jednostke i ilosc. Cecha jest opcjonalna."
+                               Foreground="{StaticResource MutedBrush}"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Grid Grid.Row="2" Margin="0,18,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Towar"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold" />
+                        <ComboBox x:Name="ProductComboBox"
+                                  Margin="0,8,0,0"
+                                  Height="30"
+                                  Padding="6,4"
+                                  Background="White"
+                                  BorderBrush="#D7CCC0"
+                                  BorderThickness="1.2"
+                                  FontSize="13"
+                                  VerticalContentAlignment="Center"
+                                  DisplayMemberPath="DisplayName"
+                                  SelectedValuePath="Code"
+                                  SelectionChanged="ProductComboBox_SelectionChanged" />
+                    </StackPanel>
+
+                    <Grid Grid.Row="1" Margin="0,18,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="140" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="Jednostka"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold" />
+                            <ComboBox x:Name="UnitComboBox"
+                                      Margin="0,8,0,0"
+                                      Height="30"
+                                      Padding="6,4"
+                                      Background="White"
+                                      BorderBrush="#D7CCC0"
+                                      BorderThickness="1.2"
+                                      FontSize="13"
+                                      VerticalContentAlignment="Center"
+                                      DisplayMemberPath="DisplayName"
+                                      SelectedValuePath="Code" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Ilosc"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold" />
+                            <TextBox x:Name="QuantityTextBox"
+                                     Margin="0,8,0,0"
+                                     Height="30"
+                                     Padding="10,4"
+                                     Background="White"
+                                     BorderBrush="#D7CCC0"
+                                     BorderThickness="1.2"
+                                     FontSize="13"
+                                     VerticalContentAlignment="Center"
+                                     Text="1" />
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel x:Name="FeaturePanel" Grid.Row="2" Margin="0,18,0,0">
+                        <TextBlock Text="Cecha"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold" />
+                        <TextBox x:Name="FeatureTextBox"
+                                 Margin="0,8,0,0"
+                                 Height="30"
+                                 Padding="10,4"
+                                 Background="White"
+                                 BorderBrush="#D7CCC0"
+                                 BorderThickness="1.2"
+                                 FontSize="13"
+                                 VerticalContentAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="3" Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="ValidationTextBlock"
+                               VerticalAlignment="Center"
+                               Foreground="#B42318"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+
+                    <Button Grid.Column="1"
+                            Width="96"
+                            Height="30"
+                            Margin="0,0,8,0"
+                            Style="{StaticResource DialogGhostButtonStyle}"
+                            Click="CancelButton_Click"
+                            Content="Anuluj" />
+
+                    <Button x:Name="AddButton"
+                            Grid.Column="2"
+                            Width="118"
+                            Height="30"
+                            Style="{StaticResource DialogPrimaryButtonStyle}"
+                            Click="AddButton_Click"
+                            Content="Dodaj pozycje" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
