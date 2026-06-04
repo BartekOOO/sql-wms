@@ -70,10 +70,6 @@ namespace SQLWMS.Models
     {
         public int Id { get; init; }
         public DateTime? DataDokumentu { get; init; }
-        public string? MagazynZrodlowyKod { get; init; }
-        public string? SektorZrodlowyKod { get; init; }
-        public string? MagazynDocelowyKod { get; init; }
-        public string? SektorDocelowyKod { get; init; }
         public string? OpisDokumentu { get; init; }
         public string Operator { get; init; } = string.Empty;
     }

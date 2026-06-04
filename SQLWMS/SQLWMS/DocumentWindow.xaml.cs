@@ -32,6 +32,10 @@ namespace SQLWMS
         private bool _suppressAutoPersist;
         private bool _pendingSourceSectorDetach;
         private bool _pendingDestinationSectorDetach;
+        private DateTime? _persistedDocumentDate;
+        private string _persistedDescription = string.Empty;
+        private string? _persistedSourceWarehouseValue;
+        private string? _persistedDestinationWarehouseValue;
         private string? _persistedSourceSectorValue;
         private string? _persistedDestinationSectorValue;
         private string _lastPersistedStateSignature = string.Empty;
@@ -58,6 +62,10 @@ namespace SQLWMS
             _documentStatus = details.StatusDokumentu.Trim();
             _allSectors = sectors.ToList();
             _positions = new ObservableCollection<DocumentPositionItem>(positions);
+            _persistedDocumentDate = details.DataRealizacji.Date;
+            _persistedDescription = NormalizeDescription(details.OpisDokumentu);
+            _persistedSourceWarehouseValue = NormalizeValue(details.MagazynZrodlowyKod);
+            _persistedDestinationWarehouseValue = NormalizeValue(details.MagazynDocelowyKod);
             _persistedSourceSectorValue = NormalizeValue(details.SektorZrodlowyKod);
             _persistedDestinationSectorValue = NormalizeValue(details.SektorDocelowyKod);
 
@@ -79,7 +87,7 @@ namespace SQLWMS
             DocumentPositionsDataGrid.ItemsSource = _positions;
             ApplyEditability();
             UpdateSectorClearButtons();
-            _lastPersistedStateSignature = CreateStateSignature();
+            _lastPersistedStateSignature = CreatePersistedStateSignature();
             _isInitializing = false;
 
             if (isReadOnlyMode)
@@ -495,10 +503,6 @@ namespace SQLWMS
             {
                 Id = _documentId,
                 DataDokumentu = selectedDate.Value.Date,
-                MagazynZrodlowyKod = _documentType == "PM" ? null : NormalizeValue(SourceWarehouseComboBox.SelectedValue as string),
-                SektorZrodlowyKod = _documentType == "PM" ? null : GetSelectedSectorValue(SourceSectorComboBox, _pendingSourceSectorDetach),
-                MagazynDocelowyKod = _documentType == "WM" ? null : NormalizeValue(DestinationWarehouseComboBox.SelectedValue as string),
-                SektorDocelowyKod = _documentType == "WM" ? null : GetSelectedSectorValue(DestinationSectorComboBox, _pendingDestinationSectorDetach),
                 OpisDokumentu = DescriptionTextBox.Text.Trim(),
                 Operator = _operatorCode
             };
@@ -551,24 +555,96 @@ namespace SQLWMS
                 }
 
                 DocumentUpdateRequest request = BuildUpdateRequest();
-                string currentStateSignature = CreateStateSignature(request);
+                string? sourceWarehouseCode = GetCurrentSourceWarehouseCode();
+                string? sourceSectorCode = GetCurrentSourceSectorCode();
+                string? destinationWarehouseCode = GetCurrentDestinationWarehouseCode();
+                string? destinationSectorCode = GetCurrentDestinationSectorCode();
+                string currentStateSignature = CreateStateSignature(request, sourceWarehouseCode, sourceSectorCode, destinationWarehouseCode, destinationSectorCode);
                 if (!force && string.Equals(currentStateSignature, _lastPersistedStateSignature, StringComparison.Ordinal))
                 {
                     return true;
                 }
 
-                DocumentProcedureResult updateResult = await _documentCatalogService.UpdateDocumentAsync(request);
-                if (!updateResult.IsSuccess)
+                if (HasSimpleFieldChanges(request))
                 {
-                    if (showErrors)
+                    DocumentProcedureResult updateResult = await _documentCatalogService.UpdateDocumentAsync(request);
+                    if (!updateResult.IsSuccess)
                     {
-                        AppDialogWindow.Show(this, "Edycja dokumentu", updateResult.Message, AppDialogKind.Warning);
+                        if (showErrors)
+                        {
+                            AppDialogWindow.Show(this, "Edycja dokumentu", updateResult.Message, AppDialogKind.Warning);
+                        }
+
+                        return false;
                     }
 
-                    return false;
+                    ApplyPersistedSimpleState(request);
                 }
 
-                ApplyPersistedSectorState(request);
+                if (ShouldPersistWarehouseChange(sourceWarehouseCode, _persistedSourceWarehouseValue))
+                {
+                    DocumentProcedureResult sourceWarehouseResult = await _documentCatalogService.ChangeDocumentWarehouseAsync(_documentId, sourceWarehouseCode!, true, _operatorCode);
+                    if (!sourceWarehouseResult.IsSuccess)
+                    {
+                        if (showErrors)
+                        {
+                            AppDialogWindow.Show(this, "Edycja dokumentu", sourceWarehouseResult.Message, AppDialogKind.Warning);
+                        }
+
+                        return false;
+                    }
+
+                    ApplyPersistedWarehouseState(true, sourceWarehouseCode!);
+                }
+
+                if (ShouldPersistWarehouseChange(destinationWarehouseCode, _persistedDestinationWarehouseValue))
+                {
+                    DocumentProcedureResult destinationWarehouseResult = await _documentCatalogService.ChangeDocumentWarehouseAsync(_documentId, destinationWarehouseCode!, false, _operatorCode);
+                    if (!destinationWarehouseResult.IsSuccess)
+                    {
+                        if (showErrors)
+                        {
+                            AppDialogWindow.Show(this, "Edycja dokumentu", destinationWarehouseResult.Message, AppDialogKind.Warning);
+                        }
+
+                        return false;
+                    }
+
+                    ApplyPersistedWarehouseState(false, destinationWarehouseCode!);
+                }
+
+                if (ShouldPersistSectorChange(sourceSectorCode, _persistedSourceSectorValue))
+                {
+                    DocumentProcedureResult sourceSectorResult = await _documentCatalogService.ChangeDocumentSectorAsync(_documentId, sourceSectorCode!, true, _operatorCode);
+                    if (!sourceSectorResult.IsSuccess)
+                    {
+                        if (showErrors)
+                        {
+                            AppDialogWindow.Show(this, "Edycja dokumentu", sourceSectorResult.Message, AppDialogKind.Warning);
+                        }
+
+                        return false;
+                    }
+
+                    ApplyPersistedSectorState(true, sourceSectorCode);
+                }
+
+                if (ShouldPersistSectorChange(destinationSectorCode, _persistedDestinationSectorValue))
+                {
+                    DocumentProcedureResult destinationSectorResult = await _documentCatalogService.ChangeDocumentSectorAsync(_documentId, destinationSectorCode!, false, _operatorCode);
+                    if (!destinationSectorResult.IsSuccess)
+                    {
+                        if (showErrors)
+                        {
+                            AppDialogWindow.Show(this, "Edycja dokumentu", destinationSectorResult.Message, AppDialogKind.Warning);
+                        }
+
+                        return false;
+                    }
+
+                    ApplyPersistedSectorState(false, destinationSectorCode);
+                }
+
                 _lastPersistedStateSignature = currentStateSignature;
                 return true;
             }
@@ -587,47 +663,115 @@ namespace SQLWMS
             }
         }
 
-        private string CreateStateSignature()
-        {
-            return CreateStateSignature(BuildUpdateRequest());
-        }
-
-        private static string CreateStateSignature(DocumentUpdateRequest request)
+        private static string CreateStateSignature(DocumentUpdateRequest request, string? sourceWarehouseCode, string? sourceSectorCode, string? destinationWarehouseCode, string? destinationSectorCode)
         {
             return string.Join("|",
                 request.DataDokumentu?.ToString("O") ?? string.Empty,
-                request.MagazynZrodlowyKod ?? string.Empty,
-                request.SektorZrodlowyKod ?? string.Empty,
-                request.MagazynDocelowyKod ?? string.Empty,
-                request.SektorDocelowyKod ?? string.Empty,
-                request.OpisDokumentu ?? string.Empty);
+                sourceWarehouseCode ?? string.Empty,
+                sourceSectorCode ?? string.Empty,
+                destinationWarehouseCode ?? string.Empty,
+                destinationSectorCode ?? string.Empty,
+                NormalizeDescription(request.OpisDokumentu));
         }
 
-        private void ApplyPersistedSectorState(DocumentUpdateRequest request)
+        private string CreatePersistedStateSignature()
         {
-            if (request.SektorZrodlowyKod == DetachSectorKey)
+            return string.Join("|",
+                _persistedDocumentDate?.ToString("O") ?? string.Empty,
+                _persistedSourceWarehouseValue ?? string.Empty,
+                _persistedSourceSectorValue ?? string.Empty,
+                _persistedDestinationWarehouseValue ?? string.Empty,
+                _persistedDestinationSectorValue ?? string.Empty,
+                _persistedDescription);
+        }
+
+        private bool HasSimpleFieldChanges(DocumentUpdateRequest request)
+        {
+            return request.DataDokumentu?.Date != _persistedDocumentDate?.Date
+                || !string.Equals(NormalizeDescription(request.OpisDokumentu), _persistedDescription, StringComparison.Ordinal);
+        }
+
+        private static bool ShouldPersistWarehouseChange(string? currentValue, string? persistedValue)
+        {
+            return !string.IsNullOrWhiteSpace(currentValue)
+                && !string.Equals(currentValue, persistedValue, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool ShouldPersistSectorChange(string? currentValue, string? persistedValue)
+        {
+            return !string.Equals(currentValue, persistedValue, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string? GetCurrentSourceWarehouseCode()
+        {
+            return _documentType == "PM" ? null : NormalizeValue(SourceWarehouseComboBox.SelectedValue as string);
+        }
+
+        private string? GetCurrentDestinationWarehouseCode()
+        {
+            return _documentType == "WM" ? null : NormalizeValue(DestinationWarehouseComboBox.SelectedValue as string);
+        }
+
+        private string? GetCurrentSourceSectorCode()
+        {
+            return _documentType == "PM" ? null : GetSelectedSectorValue(SourceSectorComboBox, _pendingSourceSectorDetach);
+        }
+
+        private string? GetCurrentDestinationSectorCode()
+        {
+            return _documentType == "WM" ? null : GetSelectedSectorValue(DestinationSectorComboBox, _pendingDestinationSectorDetach);
+        }
+
+        private void ApplyPersistedSimpleState(DocumentUpdateRequest request)
+        {
+            _persistedDocumentDate = request.DataDokumentu?.Date;
+            _persistedDescription = NormalizeDescription(request.OpisDokumentu);
+            _lastPersistedStateSignature = CreatePersistedStateSignature();
+        }
+
+        private void ApplyPersistedWarehouseState(bool isSource, string warehouseCode)
+        {
+            if (isSource)
             {
+                _persistedSourceWarehouseValue = warehouseCode;
                 _persistedSourceSectorValue = null;
                 _pendingSourceSectorDetach = false;
             }
-            else if (!string.IsNullOrWhiteSpace(request.SektorZrodlowyKod))
+            else
             {
-                _persistedSourceSectorValue = request.SektorZrodlowyKod;
-                _pendingSourceSectorDetach = false;
-            }
-
-            if (request.SektorDocelowyKod == DetachSectorKey)
-            {
+                _persistedDestinationWarehouseValue = warehouseCode;
                 _persistedDestinationSectorValue = null;
                 _pendingDestinationSectorDetach = false;
             }
-            else if (!string.IsNullOrWhiteSpace(request.SektorDocelowyKod))
+
+            _lastPersistedStateSignature = CreatePersistedStateSignature();
+            UpdateSectorClearButtons();
+        }
+
+        private void ApplyPersistedSectorState(bool isSource, string? sectorCode)
+        {
+            string? persistedSectorCode = string.Equals(sectorCode, DetachSectorKey, StringComparison.Ordinal)
+                ? null
+                : NormalizeValue(sectorCode);
+
+            if (isSource)
             {
-                _persistedDestinationSectorValue = request.SektorDocelowyKod;
+                _persistedSourceSectorValue = persistedSectorCode;
+                _pendingSourceSectorDetach = false;
+            }
+            else
+            {
+                _persistedDestinationSectorValue = persistedSectorCode;
                 _pendingDestinationSectorDetach = false;
             }
 
+            _lastPersistedStateSignature = CreatePersistedStateSignature();
             UpdateSectorClearButtons();
+        }
+
+        private static string NormalizeDescription(string? value)
+        {
+            return value?.Trim() ?? string.Empty;
         }
 
         private void UpdateSectorClearButtons()

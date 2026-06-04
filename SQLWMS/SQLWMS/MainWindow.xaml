@@ -1145,8 +1145,6 @@
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="Kod" Binding="{Binding Kod}" Width="120" SortMemberPath="Kod" />
                                                 <DataGridTextColumn Header="Nazwa" Binding="{Binding Nazwa}" Width="*" SortMemberPath="Nazwa" />
-                                                <DataGridTextColumn Header="Warianty" Binding="{Binding LiczbaWariantow}" Width="90" SortMemberPath="LiczbaWariantow" />
-                                                <DataGridTextColumn Header="Ilosc" Binding="{Binding SumaIlosci, StringFormat=N2}" Width="110" SortMemberPath="SumaIlosci" />
                                             </DataGrid.Columns>
                                         </DataGrid>
 
@@ -1198,65 +1196,33 @@
                                                             <TextBlock Text="{Binding DetailStatus}"
                                                                        Foreground="{StaticResource MutedBrush}"
                                                                        FontSize="12" />
-                                                            <Border Margin="0,8,0,0"
-                                                                    Background="White"
-                                                                    BorderBrush="#E0D5C8"
-                                                                    BorderThickness="1">
-                                                                <Grid Grid.IsSharedSizeScope="True">
-                                                                    <Grid.RowDefinitions>
-                                                                        <RowDefinition Height="Auto" />
-                                                                        <RowDefinition Height="*" />
-                                                                    </Grid.RowDefinitions>
-
-                                                                    <Grid Background="#DDE8EC">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="220" SharedSizeGroup="SectorCodeColumn" />
-                                                                            <ColumnDefinition Width="*" SharedSizeGroup="SectorNameColumn" />
-                                                                        </Grid.ColumnDefinitions>
-
-                                                                        <TextBlock Margin="14,12"
-                                                                                   Foreground="{StaticResource PrimaryBrush}"
-                                                                                   FontSize="13"
-                                                                                   FontWeight="SemiBold"
-                                                                                   Text="Kod sektora" />
-                                                                        <TextBlock Grid.Column="1"
-                                                                                   Margin="14,12"
-                                                                                   Foreground="{StaticResource PrimaryBrush}"
-                                                                                   FontSize="13"
-                                                                                   FontWeight="SemiBold"
-                                                                                   Text="Nazwa sektora" />
-                                                                    </Grid>
-
-                                                                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Sectors}">
-                                                                        <ItemsControl.ItemTemplate>
-                                                                            <DataTemplate>
-                                                                                <Border BorderBrush="#E5DED5"
-                                                                                        BorderThickness="0,0,0,1"
-                                                                                        Background="White"
-                                                                                        Padding="0">
-                                                                                    <Grid>
-                                                                                        <Grid.ColumnDefinitions>
-                                                                                            <ColumnDefinition Width="220" SharedSizeGroup="SectorCodeColumn" />
-                                                                                            <ColumnDefinition Width="*" SharedSizeGroup="SectorNameColumn" />
-                                                                                        </Grid.ColumnDefinitions>
-
-                                                                                        <TextBlock Margin="14,9"
-                                                                                                   Foreground="{StaticResource PrimaryBrush}"
-                                                                                                   FontSize="13"
-                                                                                                   Text="{Binding Kod}" />
-                                                                                        <TextBlock Grid.Column="1"
-                                                                                                   Margin="14,9"
-                                                                                                   Foreground="{StaticResource PrimaryBrush}"
-                                                                                                   FontSize="13"
-                                                                                                   Text="{Binding Nazwa}"
-                                                                                                   TextWrapping="Wrap" />
-                                                                                    </Grid>
-                                                                                </Border>
-                                                                            </DataTemplate>
-                                                                        </ItemsControl.ItemTemplate>
-                                                                    </ItemsControl>
-                                                                </Grid>
-                                                            </Border>
+                                                            <DataGrid ItemsSource="{Binding Sectors}"
+                                                                      Margin="0,8,0,0"
+                                                                      AutoGenerateColumns="False"
+                                                                      IsReadOnly="True"
+                                                                      CanUserAddRows="False"
+                                                                      CanUserDeleteRows="False"
+                                                                      CanUserSortColumns="True"
+                                                                      EnableRowVirtualization="False"
+                                                                      EnableColumnVirtualization="False"
+                                                                      HeadersVisibility="Column"
+                                                                      RowHeaderWidth="0"
+                                                                      GridLinesVisibility="All"
+                                                                      HorizontalGridLinesBrush="#E5DED5"
+                                                                      VerticalGridLinesBrush="#E5DED5"
+                                                                      AlternatingRowBackground="#FFFDF9F4"
+                                                                      RowBackground="White"
+                                                                      Background="White"
+                                                                      BorderBrush="#E0D5C8"
+                                                                      BorderThickness="1"
+                                                                      ScrollViewer.CanContentScroll="False"
+                                                                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                                                <DataGrid.Columns>
+                                                                    <DataGridTextColumn Header="Kod" Binding="{Binding Kod}" Width="180" />
+                                                                    <DataGridTextColumn Header="Nazwa" Binding="{Binding Nazwa}" Width="*" />
+                                                                </DataGrid.Columns>
+                                                            </DataGrid>
                                                         </StackPanel>
                                                     </Border>
                                                 </DataTemplate>
@@ -1275,7 +1241,6 @@
                                                 <DataGridTextColumn Header="Kod" Binding="{Binding Kod}" Width="100" SortMemberPath="Kod" />
                                                 <DataGridTextColumn Header="Nazwa" Binding="{Binding Nazwa}" Width="220" SortMemberPath="Nazwa" />
                                                 <DataGridTextColumn Header="Adres" Binding="{Binding Adres}" Width="*" SortMemberPath="Adres" />
-                                                <DataGridTextColumn Header="Sektory" Binding="{Binding LiczbaSektorow}" Width="80" SortMemberPath="LiczbaSektorow" />
                                             </DataGrid.Columns>
                                         </DataGrid>
 

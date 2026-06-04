@@ -1,4 +1,4 @@
-CREATE OR ALTER PROCEDURE SBD.ZmienSektor
+CREATE OR ALTER PROCEDURE SBD.ZmienMagazyn
 	@Id INT,
 	@Magazyn NVARCHAR(50),
 	@Typ NVARCHAR(50), --Docelowy/èrÛd≥owy
@@ -45,62 +45,42 @@ SET XACT_ABORT ON;
 		IF @TypDokumentu = N'WM' AND @Typ = N'Docelowy'
 			THROW 51029, N'nie moøna ustawiÊ magazynu docelowego dokumentom rozchodu.', 1
 
-		IF @StaryMagazyn IS NULL
-			BEGIN
-				IF @Typ = N'èrÛd≥owy'
-					UPDATE dok
-					SET dok.MagazynZrodlowyId = mag.Id,
-						dok.MagazynZrodlowyKod = mag.Kod,
-						dok.MagazynZrodlowyNazwa = mag.Nazwa
-					FROM SBD.Dokumenty dok
-					JOIN SBD.Magazyny mag ON mag.Kod = @Magazyn
-					WHERE dok.ID = @Id
 
-				IF @Typ = N'Docelowy'
-					UPDATE dok
-					SET dok.MagazynDocelowyId = mag.Id,
-						dok.MagazynDocelowyKod = mag.Kod,
-						dok.MagazynDocelowyNazwa = mag.Nazwa
-					FROM SBD.Dokumenty dok
-					JOIN SBD.Magazyny mag ON mag.Kod = @Magazyn
-					WHERE dok.ID = @Id
-			END
-		ELSE 
-			BEGIN
 
-			IF @StaryMagazyn = @Magazyn
-			BEGIN
-				IF @StartedTran = 1
-					COMMIT TRAN;
-				SELECT N'Brak zmian.' AS Odpowiedz
-				RETURN;
-			END
+		IF ISNULL(@StaryMagazyn, N'') = @Magazyn
+		BEGIN
+			IF @StartedTran = 1
+				COMMIT TRAN;
+			SELECT N'Brak zmian.' AS Odpowiedz
+			RETURN;
+		END
 
-			IF @Typ = N'èrÛd≥owy'
-					UPDATE dok
-					SET dok.MagazynZrodlowyId = mag.Id,
-						dok.MagazynZrodlowyKod = mag.Kod,
-						dok.MagazynZrodlowyNazwa = mag.Nazwa,
-						dok.SektorZrodlowyId = NULL,
-						dok.SektorZrodlowyKod = NULL,
-						dok.SektorZrodlowyNazwa = NULL
-					FROM SBD.Dokumenty dok
-					JOIN SBD.Magazyny mag ON mag.Kod = @Magazyn
-					WHERE dok.ID = @Id
-
-			IF @Typ = N'Docelowy'
+		IF @Typ = N'èrÛd≥owy'
 				UPDATE dok
-				SET dok.MagazynDocelowyId = mag.Id,
-					dok.MagazynDocelowyKod = mag.Kod,
-					dok.MagazynDocelowyNazwa = mag.Nazwa,
-					dok.SektorDocelowyId = NULL,
-					dok.SektorDocelowyKod = NULL,
-					dok.SektorDocelowyNazwa = NULL
+				SET dok.MagazynZrodlowyId = mag.Id,
+					dok.MagazynZrodlowyKod = mag.Kod,
+					dok.MagazynZrodlowyNazwa = mag.Nazwa,
+					dok.SektorZrodlowyId = NULL,
+					dok.SektorZrodlowyKod = NULL,
+					dok.SektorZrodlowyNazwa = NULL,
+					dok.DataModyfikacji = GETDATE()
 				FROM SBD.Dokumenty dok
 				JOIN SBD.Magazyny mag ON mag.Kod = @Magazyn
 				WHERE dok.ID = @Id
 
-		END
+		IF @Typ = N'Docelowy'
+			UPDATE dok
+			SET dok.MagazynDocelowyId = mag.Id,
+				dok.MagazynDocelowyKod = mag.Kod,
+				dok.MagazynDocelowyNazwa = mag.Nazwa,
+				dok.SektorDocelowyId = NULL,
+				dok.SektorDocelowyKod = NULL,
+				dok.SektorDocelowyNazwa = NULL,
+				dok.DataModyfikacji = GETDATE()
+			FROM SBD.Dokumenty dok
+			JOIN SBD.Magazyny mag ON mag.Kod = @Magazyn
+			WHERE dok.ID = @Id
+
 
 		IF @StartedTran = 1
 			COMMIT TRAN;

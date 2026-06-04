@@ -6,6 +6,9 @@ namespace SQLWMS.Services
 {
     internal sealed class DocumentCatalogService : SqlServiceBase
     {
+        private const string DestinationLocationType = "Docelowy";
+        private const string SourceLocationType = "\u0179r\u00f3d\u0142owy";
+
         public async Task<DocumentPageResult> LoadDocumentsAsync(int pageNumber, int pageSize, string? documentNumberFilter, string? documentTypeFilter, string? documentStatusFilter)
         {
             return string.IsNullOrWhiteSpace(documentStatusFilter)
@@ -178,12 +181,34 @@ FETCH NEXT @WielkoscStrony ROWS ONLY;";
                 {
                     command.Parameters.Add(new SqlParameter("@Id", request.Id));
                     command.Parameters.Add(CreateNullableDateTimeParameter("@DataDokumentu", request.DataDokumentu));
-                    command.Parameters.Add(CreateNullableParameter("@MagazynZrodlowy", request.MagazynZrodlowyKod, 50));
-                    command.Parameters.Add(CreateNullableParameter("@SektorZrodlowy", request.SektorZrodlowyKod, 50));
-                    command.Parameters.Add(CreateNullableParameter("@MagazynDocelowy", request.MagazynDocelowyKod, 50));
-                    command.Parameters.Add(CreateNullableParameter("@SektorDocelowy", request.SektorDocelowyKod, 50));
                     command.Parameters.Add(CreateNullableParameter("@Opis", request.OpisDokumentu, 500));
                     command.Parameters.Add(new SqlParameter("@Operator", request.Operator));
+                });
+        }
+
+        public async Task<DocumentProcedureResult> ChangeDocumentWarehouseAsync(int documentId, string warehouseCode, bool isSource, string operatorCode)
+        {
+            return await ExecuteDocumentProcedureAsync(
+                "SBD.ZmienMagazyn",
+                command =>
+                {
+                    command.Parameters.Add(new SqlParameter("@Id", documentId));
+                    command.Parameters.Add(new SqlParameter("@Magazyn", warehouseCode));
+                    command.Parameters.Add(new SqlParameter("@Typ", isSource ? SourceLocationType : DestinationLocationType));
+                    command.Parameters.Add(new SqlParameter("@Operator", operatorCode));
+                });
+        }
+
+        public async Task<DocumentProcedureResult> ChangeDocumentSectorAsync(int documentId, string sectorCode, bool isSource, string operatorCode)
+        {
+            return await ExecuteDocumentProcedureAsync(
+                "SBD.ZmienSektor",
+                command =>
+                {
+                    command.Parameters.Add(new SqlParameter("@Id", documentId));
+                    command.Parameters.Add(new SqlParameter("@Sektor", sectorCode));
+                    command.Parameters.Add(new SqlParameter("@Typ", isSource ? SourceLocationType : DestinationLocationType));
+                    command.Parameters.Add(new SqlParameter("@Operator", operatorCode));
                 });
         }
 

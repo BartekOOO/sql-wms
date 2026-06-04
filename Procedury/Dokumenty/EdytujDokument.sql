@@ -25,20 +25,13 @@ SET XACT_ABORT ON;
 
 		EXEC SBD.WalidacjaBlokady @DokumentId = @Id, @Operator = @Operator
 
-		DECLARE @StaraDataDokumentu DATETIME, @StaryMagazynZrodlowy NVARCHAR(50),
-			@StarySektorZrodlowy NVARCHAR(50), @StaryMagazynDocelowy NVARCHAR(50),
-			@StarySektorDocelowy NVARCHAR(50), @StaraSeria NVARCHAR(20), @StaryOpis NVARCHAR(500);
+		DECLARE @StaraDataDokumentu DATETIME, @StaryOpis NVARCHAR(500);
 
 		DECLARE @AnyChanged INT = 0;
 		DECLARE @TypDokumentu NVARCHAR(10);
 
 		SELECT
 			   @StaraDataDokumentu = DataDokumentu,
-			   @StaryMagazynZrodlowy = MagazynZrodlowyKod,
-			   @StarySektorZrodlowy = SektorZrodlowyKod,
-			   @StarySektorDocelowy = SektorDocelowyKod,
-			   @StaryMagazynDocelowy = MagazynDocelowyKod,
-			   @StaraSeria = Seria,
 			   @StaryOpis = Opis,
 			   @TypDokumentu = TypDokumentu
 		FROM SBD.Dokumenty WHERE Id = @Id
@@ -49,129 +42,6 @@ SET XACT_ABORT ON;
 			UPDATE SBD.Dokumenty SET DataDokumentu = @DataDokumentu WHERE Id = @Id
 		END
 
-		IF @MagazynZrodlowy IS NOT NULL AND @TypDokumentu = N'PM'
-			THROW 51029, N'nie mo¿na ustawiæ magazynu Ÿród³owego dokumentom przychodu.', 1
-
-		IF @SektorZrodlowy IS NOT NULL AND @TypDokumentu = N'PM'
-			THROW 51029, N'nie mo¿na ustawiaæ sektora Ÿród³owego dokumentom przychodu', 1
-
-		IF @MagazynDocelowy IS NOT NULL AND @TypDokumentu = N'WM'
-			THROW 51029, N'nie mo¿na ustawiæ magazynu docelowego dokumentom rozchodu.', 1
-
-		IF @SektorDocelowy IS NOT NULL AND @TypDokumentu = N'WM'
-			THROW 51029, N'nie mo¿na ustawiaæ sektora docelowego dokumentom rozchodu', 1
-
-		DECLARE @FinalnySektorZrodlowy NVARCHAR(50), @FinalnyMagazynZrodlowy NVARCHAR(50);
-		DECLARE @FinalnySektorDocelowy NVARCHAR(50), @FinalnyMagazynDocelowy NVARCHAR(50);
-
-		SET @FinalnyMagazynDocelowy = ISNULL(@MagazynDocelowy, @StaryMagazynDocelowy);
-		SET @FinalnyMagazynZrodlowy = ISNULL(@MagazynZrodlowy, @StaryMagazynZrodlowy);
-		SET @FinalnySektorDocelowy = ISNULL(@SektorDocelowy, @StarySektorDocelowy);
-		SET @FinalnySektorZrodlowy = ISNULL(@SektorZrodlowy, @StarySektorZrodlowy)
-
-		IF @MagazynDocelowy IS NOT NULL AND @SektorDocelowy IS NULL
-			
-
-		IF @FinalnySektorDocelowy = @FinalnySektorZrodlowy AND @TypDokumentu = N'MM'
-			THROW 51029, N'sektor docelowy i Ÿród³owy nie mo¿e byæ ten sam.', 1
-
-		IF @FinalnySektorDocelowy IS NOT NULL AND NOT EXISTS (SELECT 1 FROM 
-				SBD.Sektory s JOIN SBD.Magazyny m ON m.Id = s.MagazynId
-				WHERE m.Kod = @FinalnyMagazynDocelowy AND s.Kod = @FinalnySektorDocelowy)
-			THROW 51029, N'magazyn docelowy nie posiada takiego sektora.', 1
-
-		IF @FinalnySektorZrodlowy IS NOT NULL AND NOT EXISTS (SELECT 1 FROM 
-				SBD.Sektory s JOIN SBD.Magazyny m ON m.Id = s.MagazynId
-				WHERE m.Kod = @FinalnyMagazynZrodlowy AND s.Kod = @FinalnySektorZrodlowy)
-			THROW 51029, N'magazyn Ÿród³owy nie posiada takiego sektora.', 1
-
-
-
-		IF @MagazynZrodlowy IS NOT NULL AND @MagazynZrodlowy <> ISNULL(@StaryMagazynZrodlowy, N'')
-		BEGIN
-			SET @AnyChanged = 1;
-			IF NOT EXISTS (SELECT 1 FROM SBD.Magazyny WHERE Kod = @MagazynZrodlowy)
-				THROW 51029, N'nie istnieje magazyn z takim kodem.', 1
-
-			UPDATE dok
-				SET dok.MagazynZrodlowyId = mag.Id,
-					dok.MagazynZrodlowyKod = mag.Kod,
-					dok.MagazynZrodlowyNazwa = mag.Nazwa
-				FROM SBD.Dokumenty dok
-				JOIN SBD.Magazyny mag ON mag.Kod = @FinalnyMagazynZrodlowy 
-				WHERE dok.Id = @Id
-
-		END
-
-		IF @SektorZrodlowy IS NOT NULL AND @SektorZrodlowy <> ISNULL(@StarySektorZrodlowy, N'')
-		BEGIN
-			SET @AnyChanged = 1;
-			IF @SektorZrodlowy <> SBD.DajKluczOdpiecia() AND NOT EXISTS (SELECT 1 FROM SBD.Sektory WHERE Kod = @SektorZrodlowy)
-				THROW 51029, N'nie istnieje sektor z takim kodem.', 1
-
-			IF @SektorZrodlowy = SBD.DajKluczOdpiecia()
-				BEGIN
-					UPDATE SBD.Dokumenty
-						SET SektorZrodlowyId = NULL,
-							SektorZrodlowyKod = NULL,
-							SektorZrodlowyNazwa = NULL
-						WHERE Id = @Id
-					SET @FinalnySektorZrodlowy = NULL;
-				END
-			ELSE
-				BEGIN
-					UPDATE dok
-						SET dok.SektorZrodlowyId = sek.Id,
-							dok.SektorZrodlowyKod = sek.Kod,
-							dok.SektorZrodlowyNazwa = sek.Nazwa
-						FROM SBD.Dokumenty dok
-						JOIN SBD.Sektory sek ON sek.Kod = @FinalnySektorZrodlowy
-						WHERE dok.Id = @Id
-				END
-		END
-
-		IF @MagazynDocelowy IS NOT NULL AND @MagazynDocelowy <> ISNULL(@StaryMagazynDocelowy, N'')
-		BEGIN
-			SET @AnyChanged = 1;
-			IF NOT EXISTS (SELECT 1 FROM SBD.Magazyny WHERE Kod = @MagazynDocelowy)
-				THROW 51029, N'nie istnieje magazyn z takim kodem.', 1
-
-			UPDATE dok
-				SET dok.MagazynDocelowyId = mag.Id,
-					dok.MagazynDocelowyKod = mag.Kod,
-					dok.MagazynDocelowyNazwa = mag.Nazwa
-				FROM SBD.Dokumenty dok
-				JOIN SBD.Magazyny mag ON mag.Kod = @FinalnyMagazynDocelowy 
-				WHERE dok.Id = @Id
-
-		END
-
-		IF @SektorDocelowy IS NOT NULL AND @SektorDocelowy <> ISNULL(@StarySektorDocelowy, N'')
-		BEGIN
-			SET @AnyChanged = 1;
-			IF @SektorDocelowy <> SBD.DajKluczOdpiecia() AND NOT EXISTS (SELECT 1 FROM SBD.Sektory WHERE Kod = @SektorDocelowy)
-				THROW 51029, N'nie istnieje sektor z takim kodem.', 1
-
-			IF @SektorDocelowy = SBD.DajKluczOdpiecia()
-				BEGIN
-					UPDATE SBD.Dokumenty
-						SET SektorDocelowyId = NULL,
-							SektorDocelowyKod = NULL,
-							SektorDocelowyNazwa = NULL
-						WHERE Id = @Id
-					SET @FinalnySektorDocelowy = NULL;
-				END
-			ELSE
-				BEGIN
-					UPDATE dok
-						SET dok.SektorDocelowyId = sek.Id,
-							dok.SektorDocelowyKod = sek.Kod,
-							dok.SektorDocelowyNazwa = sek.Nazwa
-						FROM SBD.Dokumenty dok
-						JOIN SBD.Sektory sek ON sek.Kod = @FinalnySektorDocelowy
-						WHERE dok.Id = @Id
-				END
-		END
 
 		IF @Opis IS NOT NULL AND @Opis <> @StaryOpis
 		BEGIN
