@@ -2,13 +2,6 @@ CREATE OR ALTER PROCEDURE SBD.EdytujDokument
 	@Id INT,
 
 	@DataDokumentu DATETIME = NULL,
-
-	@MagazynZrodlowy NVARCHAR(50) = NULL,
-	@SektorZrodlowy NVARCHAR(50) = NULL,
-
-	@MagazynDocelowy NVARCHAR(50) = NULL,
-	@SektorDocelowy NVARCHAR(50) = NULL,
-
 	@Opis NVARCHAR(500) = NULL,
 
 	@Operator NVARCHAR(100)
@@ -26,9 +19,6 @@ SET XACT_ABORT ON;
             BEGIN TRAN;
             SET @StartedTran = 1;
         END
-
-		IF @Operator IS NULL
-			THROW 51029, N'nie podano kodu operatora.', 1
 
 		IF NOT EXISTS (SELECT * FROM SBD.Dokumenty WHERE Id = @Id)
 			THROW 51029, N'nie istnieje dokument z takim identyfikatorem.', 1
@@ -78,6 +68,9 @@ SET XACT_ABORT ON;
 		SET @FinalnyMagazynZrodlowy = ISNULL(@MagazynZrodlowy, @StaryMagazynZrodlowy);
 		SET @FinalnySektorDocelowy = ISNULL(@SektorDocelowy, @StarySektorDocelowy);
 		SET @FinalnySektorZrodlowy = ISNULL(@SektorZrodlowy, @StarySektorZrodlowy)
+
+		IF @MagazynDocelowy IS NOT NULL AND @SektorDocelowy IS NULL
+			
 
 		IF @FinalnySektorDocelowy = @FinalnySektorZrodlowy AND @TypDokumentu = N'MM'
 			THROW 51029, N'sektor docelowy i Ÿród³owy nie mo¿e byæ ten sam.', 1

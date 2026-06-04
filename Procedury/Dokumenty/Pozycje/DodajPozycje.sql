@@ -81,14 +81,16 @@ SET XACT_ABORT ON;
 			DostawaId,
 			Ilosc,
 			Cecha,
-			DataUtworzenia
+			DataUtworzenia,
+			Kierunek
 		) VALUES (
 			@DokumentId,
 			@PozycjaId,
 			NULL,
 			@Ilosc * @JednostkaPrzelicznik,
 			ISNULL(@Cecha, N''),
-			GETDATE()
+			GETDATE(),
+			N'Przychód'
 		)
 
 		IF @StartedTran = 1
