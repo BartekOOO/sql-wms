@@ -80,6 +80,14 @@ FETCH NEXT @WielkoscStrony ROWS ONLY;";
             };
         }
 
+        private static SqlParameter CreateRequiredTextParameter(string name, string? value, int size)
+        {
+            return new SqlParameter(name, SqlDbType.NVarChar, size)
+            {
+                Value = value ?? (object)DBNull.Value
+            };
+        }
+
         private static DocumentRow MapRow(SqlDataReader reader)
         {
             return new DocumentRow
@@ -193,9 +201,9 @@ FETCH NEXT @WielkoscStrony ROWS ONLY;";
                 command =>
                 {
                     command.Parameters.Add(new SqlParameter("@Id", documentId));
-                    command.Parameters.Add(new SqlParameter("@Magazyn", warehouseCode));
-                    command.Parameters.Add(new SqlParameter("@Typ", isSource ? SourceLocationType : DestinationLocationType));
-                    command.Parameters.Add(new SqlParameter("@Operator", operatorCode));
+                    command.Parameters.Add(CreateRequiredTextParameter("@Magazyn", warehouseCode, 50));
+                    command.Parameters.Add(CreateRequiredTextParameter("@Typ", isSource ? SourceLocationType : DestinationLocationType, 50));
+                    command.Parameters.Add(CreateRequiredTextParameter("@Operator", operatorCode, 100));
                 });
         }
 
@@ -206,9 +214,9 @@ FETCH NEXT @WielkoscStrony ROWS ONLY;";
                 command =>
                 {
                     command.Parameters.Add(new SqlParameter("@Id", documentId));
-                    command.Parameters.Add(new SqlParameter("@Sektor", sectorCode));
-                    command.Parameters.Add(new SqlParameter("@Typ", isSource ? SourceLocationType : DestinationLocationType));
-                    command.Parameters.Add(new SqlParameter("@Operator", operatorCode));
+                    command.Parameters.Add(CreateRequiredTextParameter("@Sektor", sectorCode, 50));
+                    command.Parameters.Add(CreateRequiredTextParameter("@Typ", isSource ? SourceLocationType : DestinationLocationType, 50));
+                    command.Parameters.Add(CreateRequiredTextParameter("@Operator", operatorCode, 100));
                 });
         }
 
@@ -234,7 +242,6 @@ FETCH NEXT @WielkoscStrony ROWS ONLY;";
                 command =>
                 {
                     command.Parameters.Add(new SqlParameter("@Id", request.Id));
-                    command.Parameters.Add(CreateNullableParameter("@TowarKod", request.TowarKod, 50));
                     command.Parameters.Add(CreateNullableDecimalParameter("@Ilosc", request.Ilosc, 18, 6));
                     command.Parameters.Add(new SqlParameter("@Operator", request.Operator));
                 });
@@ -247,6 +254,62 @@ FETCH NEXT @WielkoscStrony ROWS ONLY;";
                 command =>
                 {
                     command.Parameters.Add(new SqlParameter("@Id", id));
+                    command.Parameters.Add(new SqlParameter("@Operator", operatorCode));
+                });
+        }
+
+        public Task<List<PositionAllocationItem>> LoadPositionAllocationsAsync(int positionId)
+        {
+            const string sql = @"
+SELECT
+      a.Id AS AlokacjaId
+    , a.Cecha AS AlokacjaCecha
+    , a.Kierunek AS AlokacjaKierunek
+    , a.Ilosc AS Ilosc
+    , CASE
+          WHEN p.JednostkaPrzelicznik IS NULL OR p.JednostkaPrzelicznik = 0 THEN a.Ilosc
+          ELSE a.Ilosc / p.JednostkaPrzelicznik
+      END AS IloscJednostkowa
+        , p.JednostkaKod AS Jednostka
+FROM SBD.Alokacje a
+JOIN SBD.Pozycje p ON p.Id = a.PozycjaId
+WHERE a.PozycjaId = @PozycjaId
+ORDER BY a.Id;";
+
+            return LoadListAsync(
+                sql,
+                reader => new PositionAllocationItem
+                {
+                    AllocationId = Convert.ToInt32(reader["AlokacjaId"]),
+                    Feature = Convert.ToString(reader["AlokacjaCecha"]) ?? string.Empty,
+                    Direction = Convert.ToString(reader["AlokacjaKierunek"]) ?? string.Empty,
+                    Quantity = Convert.ToDecimal(reader["Ilosc"]),
+                    UnitQuantity = Convert.ToDecimal(reader["IloscJednostkowa"]),
+                    UnitCode = Convert.ToString(reader["Jednostka"]) ?? string.Empty
+                },
+                command => command.Parameters.Add(new SqlParameter("@PozycjaId", positionId)));
+        }
+
+        public async Task<DocumentProcedureResult> SplitAllocationAsync(AllocationSplitRequest request)
+        {
+            return await ExecuteDocumentProcedureAsync(
+                "SBD.RozbijAlokacje",
+                command =>
+                {
+                    command.Parameters.Add(new SqlParameter("@Id", request.AllocationId));
+                    command.Parameters.Add(CreateNullableDecimalParameter("@Ilosc", request.Quantity, 18, 6));
+                    command.Parameters.Add(CreateNullableParameter("@Cecha", request.Feature, 200));
+                    command.Parameters.Add(new SqlParameter("@Operator", request.Operator));
+                });
+        }
+
+        public async Task<DocumentProcedureResult> DeleteAllocationAsync(int allocationId, string operatorCode)
+        {
+            return await ExecuteDocumentProcedureAsync(
+                "SBD.UsunAlokacje",
+                command =>
+                {
+                    command.Parameters.Add(new SqlParameter("@Id", allocationId));
                     command.Parameters.Add(new SqlParameter("@Operator", operatorCode));
                 });
         }

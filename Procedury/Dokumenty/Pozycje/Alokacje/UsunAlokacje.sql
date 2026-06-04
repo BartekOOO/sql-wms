@@ -31,6 +31,9 @@ SET XACT_ABORT ON;
 
 		DECLARE @InnaAlokacja INT = (SELECT TOP 1 Id FROM SBD.Alokacje WHERE PozycjaId = @PozycjaId AND Cecha = @Cecha AND Id <> @Id)
 
+		IF @InnaAlokacja IS NULL
+			SET @InnaAlokacja = (SELECT TOP 1 Id FROM SBD.Alokacje WHERE PozycjaId = @PozycjaId AND Cecha = SBD.DajKluczPustejCechy() AND Id <> @Id)
+
 		IF @InnaAlokacja IS NOT NULL
 			BEGIN
 		

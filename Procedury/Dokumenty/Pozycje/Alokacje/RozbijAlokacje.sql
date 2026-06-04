@@ -23,12 +23,19 @@ SET XACT_ABORT ON;
 		IF NOT EXISTS (SELECT * FROM #tmp)
 			THROW 51029, N'nie istnieje alokacja z takim identyfikatorem.', 1
 
-		DECLARE @DokumentId INT = (SELECT a.DokumentId FROM SBD.Alokacje a WHERE a.Id = @Id)
+		DECLARE @DokumentId INT, @Kierunek NVARCHAR(100)
+
+		SET @Ilosc = (SELECT p.JednostkaPrzelicznik FROM SBD.Alokacje a JOIN SBD.Pozycje p ON p.id = a.PozycjaId WHERE a.Id = @Id) * @Ilosc;
+		
+		SELECT @DokumentId = a.DokumentId, @Kierunek = Kierunek FROM SBD.Alokacje a WHERE a.Id = @Id
 
 		EXEC SBD.WalidacjaBlokady @DokumentId = @DokumentId, @Operator = @Operator
 
 		IF @Ilosc <= 0
 			THROW 51029, N'alokowana iloœæ musi byæ dodatnia.', 1
+
+		IF (SELECT Ilosc FROM SBD.Alokacje WHERE Id = @Id) = @Ilosc
+			DELETE FROM SBD.Alokacje WHERE Id = @Id
 
 		IF (SELECT Ilosc FROM #tmp) < @Ilosc
 			THROW 51029, N'¿¹dana iloœæ przekracza obecn¹ iloœæ alokacji.', 1
@@ -37,13 +44,11 @@ SET XACT_ABORT ON;
 			SET Ilosc = Ilosc - @Ilosc
 		WHERE Id = @Id
 
-		IF (SELECT Ilosc FROM SBD.Alokacje WHERE Id = @Id) = 0
-			DELETE FROM SBD.Alokacje WHERE Id = @Id
 
 		INSERT INTO SBD.Alokacje
-		(DokumentId, PozycjaId, DostawaId, Ilosc, DataUtworzenia, Cecha)
+		(DokumentId, PozycjaId, DostawaId, Ilosc, DataUtworzenia, Cecha, Kierunek)
 		VALUES
-		(@DokumentId, (SELECT PozycjaId FROm #tmp), NULL, @Ilosc, GETDATE(), ISNULL(@Cecha, N''))
+		(@DokumentId, (SELECT PozycjaId FROm #tmp), NULL, @Ilosc, GETDATE(), ISNULL(@Cecha, N''), @Kierunek)
 
 		IF @StartedTran = 1
             COMMIT TRAN;

@@ -87,8 +87,26 @@ namespace SQLWMS.Models
     internal sealed class DocumentPositionUpdateRequest
     {
         public int Id { get; init; }
-        public string? TowarKod { get; init; }
         public decimal? Ilosc { get; init; }
+        public string Operator { get; init; } = string.Empty;
+    }
+
+    internal sealed class PositionAllocationItem
+    {
+        public int AllocationId { get; init; }
+        public string Feature { get; init; } = string.Empty;
+        public string DisplayFeature => string.IsNullOrWhiteSpace(Feature) ? "Brak" : Feature;
+        public string Direction { get; init; } = string.Empty;
+        public decimal Quantity { get; init; }
+        public decimal UnitQuantity { get; init; }
+        public string UnitCode { get; init; } = string.Empty;
+    }
+
+    internal sealed class AllocationSplitRequest
+    {
+        public int AllocationId { get; init; }
+        public decimal? Quantity { get; init; }
+        public string? Feature { get; init; }
         public string Operator { get; init; } = string.Empty;
     }
 

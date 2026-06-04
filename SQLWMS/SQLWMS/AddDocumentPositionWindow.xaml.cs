@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
@@ -12,6 +13,7 @@ namespace SQLWMS
         private readonly int? _documentId;
         private readonly DocumentPositionItem? _existingPosition;
         private readonly string _operatorCode;
+        private readonly ObservableCollection<PositionAllocationItem> _allocations = [];
 
         internal AddDocumentPositionWindow(DocumentCatalogService documentCatalogService, int documentId, string operatorCode)
         {
@@ -19,6 +21,8 @@ namespace SQLWMS
             _documentCatalogService = documentCatalogService;
             _documentId = documentId;
             _operatorCode = operatorCode;
+            AllocationsDataGrid.ItemsSource = _allocations;
+            UpdateAllocationSectionState();
 
             Loaded += AddDocumentPositionWindow_Loaded;
         }
@@ -31,6 +35,7 @@ namespace SQLWMS
             DialogTitleTextBlock.Text = "Pozycja dokumentu";
             AddButton.Content = "Zapisz pozycje";
             FeaturePanel.Visibility = Visibility.Collapsed;
+            ProductComboBox.IsEnabled = false;
         }
 
         public bool IsEditMode => _existingPosition is not null;
@@ -72,6 +77,15 @@ namespace SQLWMS
             {
                 ValidationTextBlock.Text = $"Nie udalo sie pobrac towarow. {ex.Message}";
                 AddButton.IsEnabled = false;
+            }
+
+            if (IsEditMode)
+            {
+                await LoadAllocationsAsync();
+            }
+            else
+            {
+                UpdateAllocationSectionState();
             }
         }
 
@@ -155,7 +169,6 @@ namespace SQLWMS
                     ? await _documentCatalogService.UpdateDocumentPositionAsync(new DocumentPositionUpdateRequest
                     {
                         Id = _existingPosition!.Id,
-                        TowarKod = product.Code,
                         Ilosc = quantity,
                         Operator = _operatorCode
                     })
@@ -182,6 +195,163 @@ namespace SQLWMS
             {
                 ValidationTextBlock.Text = ex.Message;
                 AddButton.IsEnabled = true;
+            }
+        }
+
+        private async Task LoadAllocationsAsync()
+        {
+            if (!IsEditMode)
+            {
+                UpdateAllocationSectionState();
+                return;
+            }
+
+            try
+            {
+                AllocationValidationTextBlock.Text = string.Empty;
+                List<PositionAllocationItem> allocations = await _documentCatalogService.LoadPositionAllocationsAsync(_existingPosition!.Id);
+
+                _allocations.Clear();
+                foreach (PositionAllocationItem allocation in allocations)
+                {
+                    _allocations.Add(allocation);
+                }
+
+                if (_allocations.Count > 0)
+                {
+                    AllocationsDataGrid.SelectedIndex = 0;
+                }
+                else
+                {
+                    AllocationsDataGrid.SelectedItem = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                AllocationValidationTextBlock.Text = $"Nie udalo sie pobrac alokacji. {ex.Message}";
+            }
+
+            UpdateAllocationSectionState();
+        }
+
+        private void UpdateAllocationSectionState()
+        {
+            bool hasSelection = AllocationsDataGrid.SelectedItem is PositionAllocationItem;
+            bool isEditMode = IsEditMode;
+            bool hasAllocations = _allocations.Count > 0;
+
+            AllocationNewPositionTextBlock.Visibility = isEditMode ? Visibility.Collapsed : Visibility.Visible;
+            AllocationEmptyStateTextBlock.Visibility = isEditMode && !hasAllocations ? Visibility.Visible : Visibility.Collapsed;
+            AllocationsDataGrid.Visibility = isEditMode && hasAllocations ? Visibility.Visible : Visibility.Collapsed;
+            AllocationActionPanel.Visibility = isEditMode ? Visibility.Visible : Visibility.Collapsed;
+
+            AllocationSplitQuantityTextBox.IsEnabled = isEditMode && hasSelection;
+            AllocationSplitFeatureTextBox.IsEnabled = isEditMode && hasSelection;
+            SplitAllocationButton.IsEnabled = isEditMode && hasSelection;
+            DeleteAllocationButton.IsEnabled = isEditMode && hasSelection;
+        }
+
+        private void AllocationsDataGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            AllocationValidationTextBlock.Text = string.Empty;
+
+            if (AllocationsDataGrid.SelectedItem is not PositionAllocationItem)
+            {
+                AllocationSplitQuantityTextBox.Text = string.Empty;
+                AllocationSplitFeatureTextBox.Text = string.Empty;
+            }
+
+            UpdateAllocationSectionState();
+        }
+
+        private async void SplitAllocationButton_Click(object sender, RoutedEventArgs e)
+        {
+            AllocationValidationTextBlock.Text = string.Empty;
+
+            if (AllocationsDataGrid.SelectedItem is not PositionAllocationItem allocation)
+            {
+                AllocationValidationTextBlock.Text = "Wybierz alokacje do rozbicia.";
+                return;
+            }
+
+            if (!TryParseQuantity(AllocationSplitQuantityTextBox.Text.Trim(), out decimal unitQuantity) || unitQuantity <= 0)
+            {
+                AllocationValidationTextBlock.Text = "Podaj dodatnia ilosc do rozbicia.";
+                return;
+            }
+
+            SplitAllocationButton.IsEnabled = false;
+            DeleteAllocationButton.IsEnabled = false;
+
+            try
+            {
+                DocumentProcedureResult result = await _documentCatalogService.SplitAllocationAsync(new AllocationSplitRequest
+                {
+                    AllocationId = allocation.AllocationId,
+                    Quantity = unitQuantity,
+                    Feature = string.IsNullOrWhiteSpace(AllocationSplitFeatureTextBox.Text) ? null : AllocationSplitFeatureTextBox.Text.Trim(),
+                    Operator = _operatorCode
+                });
+
+                if (!result.IsSuccess)
+                {
+                    AllocationValidationTextBlock.Text = result.Message;
+                    UpdateAllocationSectionState();
+                    return;
+                }
+
+                AllocationSplitQuantityTextBox.Text = string.Empty;
+                AllocationSplitFeatureTextBox.Text = string.Empty;
+                await LoadAllocationsAsync();
+            }
+            catch (Exception ex)
+            {
+                AllocationValidationTextBlock.Text = ex.Message;
+                UpdateAllocationSectionState();
+            }
+        }
+
+        private async void DeleteAllocationButton_Click(object sender, RoutedEventArgs e)
+        {
+            AllocationValidationTextBlock.Text = string.Empty;
+
+            if (AllocationsDataGrid.SelectedItem is not PositionAllocationItem allocation)
+            {
+                AllocationValidationTextBlock.Text = "Wybierz alokacje do usuniecia.";
+                return;
+            }
+
+            bool confirmed = AppDialogWindow.Confirm(
+                this,
+                "Usuwanie alokacji",
+                $"Czy na pewno usunac alokacje \"{allocation.DisplayFeature}\"?",
+                "Usun",
+                "Anuluj");
+
+            if (!confirmed)
+            {
+                return;
+            }
+
+            SplitAllocationButton.IsEnabled = false;
+            DeleteAllocationButton.IsEnabled = false;
+
+            try
+            {
+                DocumentProcedureResult result = await _documentCatalogService.DeleteAllocationAsync(allocation.AllocationId, _operatorCode);
+                if (!result.IsSuccess)
+                {
+                    AllocationValidationTextBlock.Text = result.Message;
+                    UpdateAllocationSectionState();
+                    return;
+                }
+
+                await LoadAllocationsAsync();
+            }
+            catch (Exception ex)
+            {
+                AllocationValidationTextBlock.Text = ex.Message;
+                UpdateAllocationSectionState();
             }
         }
 

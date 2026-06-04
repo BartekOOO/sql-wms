@@ -1,6 +1,5 @@
 CREATE OR ALTER PROCEDURE SBD.EdytujPozycje
 	@Id INT = NULL,
-	@TowarKod NVARCHAR(50) = NULL,
 	@Ilosc DECIMAL(18, 6) = NULL,
 	@Operator NVARCHAR(100)
 AS
@@ -53,8 +52,9 @@ SET XACT_ABORT ON;
 							
 							IF NOT EXISTS (SELECT * FROM SBD.Alokacje WHERE PozycjaId = @Id AND Cecha = SBD.DajKluczPustejCechy())
 								BEGIN
-									INSERT INTO SBD.Alokacje (DokumentId, PozycjaId, DostawaId, Ilosc, DataUtworzenia, Cecha)
-									SELECT p.DokumentId, p.Id, NULL, @Ilosc - @StaraIlosc, GETDATE(), SBD.DajKluczPustejCechy() FROM SBD.Pozycje p
+									INSERT INTO SBD.Alokacje (DokumentId, PozycjaId, DostawaId, Ilosc, DataUtworzenia, Cecha, Kierunek)
+									SELECT TOP 1 p.DokumentId, p.Id, NULL, @Ilosc - @StaraIlosc, GETDATE(), SBD.DajKluczPustejCechy(), a.Kierunek FROM SBD.Pozycje p
+									JOIN SBD.Alokacje a ON a.PozycjaId = p.Id
 									WHERE p.Id = @Id
 								END
 							ELSE 
@@ -103,41 +103,6 @@ SET XACT_ABORT ON;
 				WHERE Id = @Id
 
 				SET @AnyChanged = 1;
-			END
-		END
-
-		IF @TowarKod IS NOT NULL
-		BEGIN
-			
-			IF NOT EXISTS (SELECT * FROM SBD.Towary WHERE Kod = @TowarKod)
-				THROW 51029, N'nie istnieje towar z takim kodem.', 1
-			
-			DECLARE @DomyslnaJednostka NVARCHAR(20), @DomyslnaJednostkaPrzelicznik DECIMAL(18, 6), @DomyslnaJednostkaId INT
-			SELECT @DomyslnaJednostka = j.Kod, @DomyslnaJednostkaPrzelicznik = j.Przelicznik, @DomyslnaJednostkaId = j.Id
-				FROM SBD.Jednostki j JOIN SBD.Towary t ON t.Id = j.TowarId WHERE t.Kod = @TowarKod AND j.Przelicznik = 1
-
-			IF @TowarKod <> (SELECT TowarKod FROM SBD.Pozycje WHERE Id = @Id)
-			BEGIN
-				UPDATE pozycja
-					SET pozycja.JednostkaPrzelicznik = @DomyslnaJednostkaPrzelicznik,
-						pozycja.JednostkaKod = @DomyslnaJednostka,
-						pozycja.JednostkaId = @DomyslnaJednostkaId,
-						pozycja.TowarKod = t.Kod,
-						pozycja.TowarNazwa = t.Nazwa,
-						pozycja.TowarId = t.Id
-					FROM SBD.Pozycje pozycja
-					JOIN SBD.Towary t ON t.Kod = @TowarKod
-					WHERE pozycja.Id = @Id
-
-				SET @AnyChanged = 1;
-
-				DELETE FROM SBD.Alokacje WHERE PozycjaId = @Id
-
-				INSERT INTO SBD.Alokacje 
-					(PozycjaId, DokumentId, DostawaId, Ilosc, DataUtworzenia, Cecha)
-					VALUES
-					(@Id, @DokumentId, NULL, (SELECT COALESCE(@Ilosc, Ilosc) FROM SBD.Pozycje WHERE Id = @Id), GETDATE(), SBD.DajKluczPustejCechy())
-
 			END
 		END
 

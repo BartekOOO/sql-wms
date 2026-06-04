@@ -64,10 +64,18 @@ namespace SQLWMS
             _positions = new ObservableCollection<DocumentPositionItem>(positions);
             _persistedDocumentDate = details.DataRealizacji.Date;
             _persistedDescription = NormalizeDescription(details.OpisDokumentu);
-            _persistedSourceWarehouseValue = NormalizeValue(details.MagazynZrodlowyKod);
-            _persistedDestinationWarehouseValue = NormalizeValue(details.MagazynDocelowyKod);
-            _persistedSourceSectorValue = NormalizeValue(details.SektorZrodlowyKod);
-            _persistedDestinationSectorValue = NormalizeValue(details.SektorDocelowyKod);
+            _persistedSourceWarehouseValue = _documentType == "PM"
+                ? null
+                : NormalizeValue(details.MagazynZrodlowyKod);
+            _persistedDestinationWarehouseValue = _documentType == "WM"
+                ? null
+                : NormalizeValue(details.MagazynDocelowyKod);
+            _persistedSourceSectorValue = _documentType == "PM"
+                ? null
+                : NormalizeValue(details.SektorZrodlowyKod);
+            _persistedDestinationSectorValue = _documentType == "WM"
+                ? null
+                : NormalizeValue(details.SektorDocelowyKod);
 
             DocumentTitleTextBlock.Text = details.NumerDokumentu;
 
