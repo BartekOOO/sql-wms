@@ -150,11 +150,11 @@ BEGIN
     (
         TypDokumentu
         + N'-'
-        + RIGHT(REPLICATE(N'0', 10) + CONVERT(NVARCHAR(10), Numer), 10)
+        + CONVERT(NVARCHAR(4), DATEPART(YEAR, DataDokumentu))
         + N'/'
         + RIGHT(N'0' + CONVERT(NVARCHAR(2), DATEPART(MONTH, DataDokumentu)), 2)
         + N'/'
-        + CONVERT(NVARCHAR(4), DATEPART(YEAR, DataDokumentu))
+        + RIGHT(REPLICATE(N'0', 10) + CONVERT(NVARCHAR(10), Numer), 10)
         + CASE
             WHEN LTRIM(RTRIM(Seria)) <> N''
                 THEN N'/' + Seria

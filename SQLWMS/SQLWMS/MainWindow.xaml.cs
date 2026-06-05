@@ -32,6 +32,9 @@ namespace SQLWMS
         private int _documentsTotalCount;
         private int _filterRequestVersion;
         private bool _suspendFilterReload;
+        private string _documentWarehouseFilter = string.Empty;
+        private string _documentSectorFilter = string.Empty;
+        private string _documentProductFilter = string.Empty;
         private NavigationSection _currentSection = NavigationSection.Home;
 
         private enum NavigationSection
@@ -55,6 +58,7 @@ namespace SQLWMS
             WarehousesDataGrid.ItemsSource = _warehousesView;
 
             UpdateCurrentUserPresentation();
+            UpdateDocumentAdvancedFilterButtons();
             ShowHome();
         }
 
@@ -315,6 +319,44 @@ namespace SQLWMS
             await ReloadCurrentSectionAsync();
         }
 
+        private async void DocumentAdvancedFiltersButton_Click(object sender, RoutedEventArgs e)
+        {
+            DocumentAdvancedFiltersWindow filtersWindow = new(
+                _documentCatalogService,
+                _documentWarehouseFilter,
+                _documentSectorFilter,
+                _documentProductFilter)
+            {
+                Owner = this
+            };
+
+            bool? result = filtersWindow.ShowDialog();
+            if (result != true)
+            {
+                return;
+            }
+
+            _documentWarehouseFilter = filtersWindow.SelectedWarehouseCode;
+            _documentSectorFilter = filtersWindow.SelectedSectorCode;
+            _documentProductFilter = filtersWindow.SelectedProductCode;
+            _documentsCurrentPage = 1;
+            UpdateDocumentAdvancedFilterButtons();
+            await ReloadCurrentSectionAsync();
+        }
+
+        private async void DocumentAdvancedFiltersResetButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!HasDocumentAdvancedFilters())
+            {
+                return;
+            }
+
+            ResetDocumentAdvancedFilters();
+            _documentsCurrentPage = 1;
+            UpdateDocumentAdvancedFilterButtons();
+            await ReloadCurrentSectionAsync();
+        }
+
         private async void DocumentsPreviousPageButton_Click(object sender, RoutedEventArgs e)
         {
             if (_documentsCurrentPage <= 1)
@@ -367,8 +409,10 @@ namespace SQLWMS
             DocumentNumberFilterTextBox.Text = string.Empty;
             DocumentTypeFilterComboBox.SelectedIndex = 0;
             DocumentStatusFilterComboBox.SelectedIndex = 0;
+            ResetDocumentAdvancedFilters();
             _documentsCurrentPage = 1;
             _suspendFilterReload = false;
+            UpdateDocumentAdvancedFilterButtons();
 
             SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
 
@@ -434,7 +478,10 @@ namespace SQLWMS
                     DocumentsPageSize,
                     documentNumberFilter,
                     documentTypeFilter,
-                    documentStatusFilter);
+                    documentStatusFilter,
+                    _documentWarehouseFilter,
+                    _documentSectorFilter,
+                    _documentProductFilter);
 
                 if (requestVersion != _filterRequestVersion || _currentSection != NavigationSection.Documents)
                 {
@@ -631,6 +678,57 @@ namespace SQLWMS
             return comboBox.SelectedItem is System.Windows.Controls.ComboBoxItem item
                 ? Convert.ToString(item.Tag) ?? string.Empty
                 : string.Empty;
+        }
+
+        private void ResetDocumentAdvancedFilters()
+        {
+            _documentWarehouseFilter = string.Empty;
+            _documentSectorFilter = string.Empty;
+            _documentProductFilter = string.Empty;
+        }
+
+        private bool HasDocumentAdvancedFilters()
+        {
+            return !string.IsNullOrWhiteSpace(_documentWarehouseFilter)
+                || !string.IsNullOrWhiteSpace(_documentSectorFilter)
+                || !string.IsNullOrWhiteSpace(_documentProductFilter);
+        }
+
+        private void UpdateDocumentAdvancedFilterButtons()
+        {
+            if (DocumentAdvancedFiltersButton is null || DocumentAdvancedFiltersResetButton is null)
+            {
+                return;
+            }
+
+            bool hasFilters = HasDocumentAdvancedFilters();
+            DocumentAdvancedFiltersButton.ToolTip = hasFilters
+                ? BuildDocumentAdvancedFiltersTooltip()
+                : "Dodatkowe filtry po magazynie, sektorze i towarze";
+            DocumentAdvancedFiltersResetButton.IsEnabled = hasFilters;
+            DocumentAdvancedFiltersResetButton.Opacity = hasFilters ? 1 : 0.5;
+        }
+
+        private string BuildDocumentAdvancedFiltersTooltip()
+        {
+            List<string> parts = [];
+
+            if (!string.IsNullOrWhiteSpace(_documentWarehouseFilter))
+            {
+                parts.Add($"Magazyn: {_documentWarehouseFilter}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(_documentSectorFilter))
+            {
+                parts.Add($"Sektor: {_documentSectorFilter}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(_documentProductFilter))
+            {
+                parts.Add($"Towar: {_documentProductFilter}");
+            }
+
+            return string.Join(Environment.NewLine, parts);
         }
 
         private async Task OpenSelectedDocumentFromGridAsync()
@@ -839,7 +937,7 @@ namespace SQLWMS
             return section switch
             {
                 NavigationSection.Documents =>
-                    "Lista dokumentow magazynowych z filtrowaniem po numerze, typie i statusie oraz z paginacja po stronie SQL.",
+                    "Lista dokumentow magazynowych z filtrowaniem po numerze, typie, statusie oraz dodatkowymi filtrami magazynu, sektora i towaru.",
                 NavigationSection.Warehouses =>
                     "Lista magazynow z danymi z widoku SBD.MagazynyView. Szczegoly sektorow doladowuja sie dopiero po rozwinieciu wiersza.",
                 NavigationSection.Products =>
@@ -854,7 +952,7 @@ namespace SQLWMS
         {
             return section switch
             {
-                NavigationSection.Documents => "Uzyj filtrow nad tabela, a do przechodzenia pomiedzy stronami skorzystaj z pagera pod lista.",
+                NavigationSection.Documents => "Uzyj filtrow nad tabela i przycisku Filtry, a do przechodzenia pomiedzy stronami skorzystaj z pagera pod lista.",
                 NavigationSection.Warehouses => "Kliknij naglowek kolumny, aby sortowac. Uzyj plusa w pierwszej kolumnie, aby doladowac sektory tylko dla wybranego magazynu.",
                 NavigationSection.Products => "Kliknij naglowek kolumny, aby sortowac. Uzyj plusa w pierwszej kolumnie, aby doladowac warianty tylko dla wybranego towaru.",
                 _ => "Widok zachowuje prosta nawigacje powrotu do panelu glownego."

@@ -1,0 +1,205 @@
+<Window x:Class="SQLWMS.DocumentAdvancedFiltersWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Filtry dokumentow"
+        Width="580"
+        MinWidth="580"
+        MaxWidth="580"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        WindowStartupLocation="CenterOwner"
+        Background="#F2EDE4"
+        FontFamily="Bahnschrift"
+        UseLayoutRounding="True"
+        ShowInTaskbar="False">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#173B47" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#BE6943" />
+
+        <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#224C5A" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#102B34" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DialogGhostButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#12FFFFFF" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="#284F5D" />
+            <Setter Property="BorderThickness" Value="1.2" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#18FFFFFF" />
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="22,18,22,18"
+          MouseLeftButtonDown="RootGrid_MouseLeftButtonDown">
+        <Border Background="#FBF8F3"
+                BorderBrush="#D4C9BA"
+                BorderThickness="1.4"
+                CornerRadius="4"
+                Padding="20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Filtry dokumentow"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontSize="22"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,6,0,0"
+                               Foreground="#5D6B71"
+                               FontSize="13"
+                               Text="Wyszukaj dokumenty po magazynie, sektorze lub towarze. Filtr magazynu zawęza liste sektorow." />
+                </StackPanel>
+
+                <Grid Grid.Row="1" Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="18" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Magazyn"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold" />
+                        <ComboBox x:Name="WarehouseFilterComboBox"
+                                  Margin="0,8,0,0"
+                                  Height="30"
+                                  Padding="6,4"
+                                  Background="White"
+                                  BorderBrush="#D7CCC0"
+                                  BorderThickness="1.2"
+                                  FontSize="13"
+                                  VerticalContentAlignment="Center"
+                                  DisplayMemberPath="DisplayName"
+                                  SelectedValuePath="Value"
+                                  SelectionChanged="WarehouseFilterComboBox_SelectionChanged" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Sektor"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold" />
+                        <ComboBox x:Name="SectorFilterComboBox"
+                                  Margin="0,8,0,0"
+                                  Height="30"
+                                  Padding="6,4"
+                                  Background="White"
+                                  BorderBrush="#D7CCC0"
+                                  BorderThickness="1.2"
+                                  FontSize="13"
+                                  VerticalContentAlignment="Center"
+                                  DisplayMemberPath="DisplayName"
+                                  SelectedValuePath="Value" />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Grid.Row="2" Margin="0,18,0,0">
+                    <TextBlock Text="Towar"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontSize="13"
+                               FontWeight="SemiBold" />
+                    <ComboBox x:Name="ProductFilterComboBox"
+                              Margin="0,8,0,0"
+                              Height="30"
+                              Padding="6,4"
+                              Background="White"
+                              BorderBrush="#D7CCC0"
+                              BorderThickness="1.2"
+                              FontSize="13"
+                              VerticalContentAlignment="Center"
+                              DisplayMemberPath="DisplayName"
+                              SelectedValuePath="Value" />
+                </StackPanel>
+
+                <Grid Grid.Row="3" Margin="0,22,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="ValidationTextBlock"
+                               VerticalAlignment="Center"
+                               Foreground="#B42318"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+
+                    <Button Grid.Column="1"
+                            Width="100"
+                            Height="30"
+                            Margin="0,0,8,0"
+                            Style="{StaticResource DialogGhostButtonStyle}"
+                            Click="ClearButton_Click"
+                            Content="Wyczysc" />
+
+                    <Button Grid.Column="2"
+                            Width="96"
+                            Height="30"
+                            Margin="0,0,8,0"
+                            Style="{StaticResource DialogGhostButtonStyle}"
+                            Click="CancelButton_Click"
+                            Content="Anuluj" />
+
+                    <Button x:Name="ApplyButton"
+                            Grid.Column="3"
+                            Width="118"
+                            Height="30"
+                            Style="{StaticResource DialogPrimaryButtonStyle}"
+                            Click="ApplyButton_Click"
+                            Content="Zastosuj" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

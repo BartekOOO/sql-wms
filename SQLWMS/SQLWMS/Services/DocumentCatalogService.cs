@@ -9,11 +9,32 @@ namespace SQLWMS.Services
         private const string DestinationLocationType = "Docelowy";
         private const string SourceLocationType = "\u0179r\u00f3d\u0142owy";
 
-        public async Task<DocumentPageResult> LoadDocumentsAsync(int pageNumber, int pageSize, string? documentNumberFilter, string? documentTypeFilter, string? documentStatusFilter)
+        public async Task<DocumentPageResult> LoadDocumentsAsync(
+            int pageNumber,
+            int pageSize,
+            string? documentNumberFilter,
+            string? documentTypeFilter,
+            string? documentStatusFilter,
+            string? warehouseFilter,
+            string? sectorFilter,
+            string? productFilter)
         {
-            return string.IsNullOrWhiteSpace(documentStatusFilter)
+            bool useProcedure = string.IsNullOrWhiteSpace(documentStatusFilter)
+                && string.IsNullOrWhiteSpace(warehouseFilter)
+                && string.IsNullOrWhiteSpace(sectorFilter)
+                && string.IsNullOrWhiteSpace(productFilter);
+
+            return useProcedure
                 ? await LoadDocumentsViaProcedureAsync(pageNumber, pageSize, documentNumberFilter, documentTypeFilter)
-                : await LoadDocumentsViaViewAsync(pageNumber, pageSize, documentNumberFilter, documentTypeFilter, documentStatusFilter);
+                : await LoadDocumentsViaViewAsync(
+                    pageNumber,
+                    pageSize,
+                    documentNumberFilter,
+                    documentTypeFilter,
+                    documentStatusFilter,
+                    warehouseFilter,
+                    sectorFilter,
+                    productFilter);
         }
 
         private async Task<DocumentPageResult> LoadDocumentsViaProcedureAsync(int pageNumber, int pageSize, string? documentNumberFilter, string? documentTypeFilter)
@@ -34,7 +55,15 @@ namespace SQLWMS.Services
             return ToPageResult(rows);
         }
 
-        private async Task<DocumentPageResult> LoadDocumentsViaViewAsync(int pageNumber, int pageSize, string? documentNumberFilter, string? documentTypeFilter, string? documentStatusFilter)
+        private async Task<DocumentPageResult> LoadDocumentsViaViewAsync(
+            int pageNumber,
+            int pageSize,
+            string? documentNumberFilter,
+            string? documentTypeFilter,
+            string? documentStatusFilter,
+            string? warehouseFilter,
+            string? sectorFilter,
+            string? productFilter)
         {
             const string sql = @"
 SELECT
@@ -53,6 +82,13 @@ FROM SBD.DokumentyView d
 WHERE (@NumerDokumentu = N'' OR d.NumerDokumentu LIKE N'%' + @NumerDokumentu + N'%')
   AND (@TypDokumentu = N'' OR d.TypDokumentu = @TypDokumentu)
   AND (@StatusDokumentu = N'' OR d.StatusDokumentu = @StatusDokumentu)
+    AND (@MagazynKod = N'' OR d.MagazynZrodlowyKod = @MagazynKod OR d.MagazynDocelowyKod = @MagazynKod)
+    AND (@SektorKod = N'' OR d.SektorZrodlowyKod = @SektorKod OR d.SektorDocelowyKod = @SektorKod)
+    AND (@TowarKod = N'' OR EXISTS (
+                SELECT 1
+                FROM SBD.Pozycje p
+                WHERE p.DokumentId = d.Id
+                    AND p.TowarKod = @TowarKod))
 ORDER BY d.NumerSortowania ASC
 OFFSET @Offset ROWS
 FETCH NEXT @WielkoscStrony ROWS ONLY;";
@@ -65,6 +101,9 @@ FETCH NEXT @WielkoscStrony ROWS ONLY;";
                     command.Parameters.Add(new SqlParameter("@NumerDokumentu", documentNumberFilter ?? string.Empty));
                     command.Parameters.Add(new SqlParameter("@TypDokumentu", documentTypeFilter ?? string.Empty));
                     command.Parameters.Add(new SqlParameter("@StatusDokumentu", documentStatusFilter ?? string.Empty));
+                    command.Parameters.Add(new SqlParameter("@MagazynKod", warehouseFilter ?? string.Empty));
+                    command.Parameters.Add(new SqlParameter("@SektorKod", sectorFilter ?? string.Empty));
+                    command.Parameters.Add(new SqlParameter("@TowarKod", productFilter ?? string.Empty));
                     command.Parameters.Add(new SqlParameter("@Offset", (pageNumber - 1) * pageSize));
                     command.Parameters.Add(new SqlParameter("@WielkoscStrony", pageSize));
                 });

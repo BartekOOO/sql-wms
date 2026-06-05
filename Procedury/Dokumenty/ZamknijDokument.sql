@@ -78,13 +78,14 @@ SET XACT_ABORT ON;
 
 		IF @Akcja = N'Usun'
 			BEGIN
-				DELETE FROM SBD.Dokumenty WHERE Id = @Id
-				DELETE FROM SBD.Pozycje WHERE DokumentId = @Id
 				DELETE FROM SBD.Alokacje WHERE DokumentId = @Id
+				DELETE FROM SBD.Pozycje WHERE DokumentId = @Id
+				DELETE FROM SBD.Dokumenty WHERE Id = @Id
 			END
 		ELSE
 			BEGIN
-				UPDATE SBD.Dokumenty SET OperatorKod = NULL WHERE Id = @Id
+				UPDATE SBD.Dokumenty SET OperatorKod = NULL
+					, DataModyfikacji = GETDATE()	WHERE Id = @Id
 		END
 
 		IF @StartedTran = 1

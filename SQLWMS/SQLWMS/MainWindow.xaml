@@ -796,6 +796,10 @@
                                         <ColumnDefinition Width="170" />
                                         <ColumnDefinition Width="12" />
                                         <ColumnDefinition Width="170" />
+                                        <ColumnDefinition Width="12" />
+                                        <ColumnDefinition Width="92" />
+                                        <ColumnDefinition Width="8" />
+                                        <ColumnDefinition Width="34" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
@@ -855,6 +859,23 @@
                                         <ComboBoxItem Content="Zatwierdzony" Tag="Zatwierdzony" />
                                         <ComboBoxItem Content="Anulowany" Tag="Anulowany" />
                                     </ComboBox>
+
+                                        <Button x:Name="DocumentAdvancedFiltersButton"
+                                            Grid.Column="6"
+                                            Height="28"
+                                            Style="{StaticResource SectionActionButtonStyle}"
+                                            Click="DocumentAdvancedFiltersButton_Click"
+                                            Content="Filtry"
+                                            ToolTip="Dodatkowe filtry po magazynie, sektorze i towarze" />
+
+                                        <Button x:Name="DocumentAdvancedFiltersResetButton"
+                                            Grid.Column="8"
+                                            Height="28"
+                                            Style="{StaticResource GhostButtonStyle}"
+                                            FontWeight="Bold"
+                                            Click="DocumentAdvancedFiltersResetButton_Click"
+                                            Content="X"
+                                            ToolTip="Wyczysc dodatkowe filtry" />
                                 </Grid>
                             </StackPanel>
 

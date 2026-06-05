@@ -131,6 +131,8 @@ BEGIN
     FETCH NEXT @WielkoscStrony ROWS ONLY;
     ';
 
+	PRINT @Sql;
+
     EXEC sp_executesql
         @Sql,
         N'

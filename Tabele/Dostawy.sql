@@ -51,3 +51,28 @@ BEGIN
     ADD Cecha NVARCHAR(200) NOT NULL DEFAULT(N'');
 END
 GO
+
+
+IF OBJECT_ID(N'SBD.Dostawy', N'U') IS NOT NULL
+AND COL_LENGTH(N'SBD.Dostawy', N'ZakladajacaAlokacjaId') IS NULL
+BEGIN
+    ALTER TABLE SBD.Dostawy
+    ADD ZakladajacaAlokacjaId INT NULL;
+END
+GO
+
+IF OBJECT_ID(N'SBD.Dostawy', N'U') IS NOT NULL
+AND OBJECT_ID(N'SBD.Alokacje', N'U') IS NOT NULL
+AND NOT EXISTS
+(
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = N'FK_SBD_Dostawy_Alokacje_Zakladajaca'
+)
+BEGIN
+    ALTER TABLE SBD.Dostawy
+    ADD CONSTRAINT FK_SBD_Dostawy_Alokacje_Zakladajaca
+        FOREIGN KEY (ZakladajacaAlokacjaId)
+        REFERENCES SBD.Alokacje(Id);
+END
+GO
