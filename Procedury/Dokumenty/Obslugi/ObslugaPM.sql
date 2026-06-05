@@ -27,7 +27,7 @@ SET XACT_ABORT ON;
 
 				--Przygotowanie wstêpnych danych
 				SELECT p.TowarId, p.TowarKod, p.TowarNazwa, d.MagazynDocelowyId, d.SektorDocelowyId,
-					p.Id AS ZakladajacaPozycja, a.Ilosc, GETDATE() AS DataUtworzenia, NULL AS DataModyfikacji,
+					p.Id AS ZakladajacaPozycja, a.Ilosc, GETDATE() AS DataUtworzenia, CAST(NULL AS DATETIME2(0)) AS DataModyfikacji,
 					a.Cecha AS Cecha, a.Id AS ZakladajacaAlokacja
 				INTO #dane
 				FROM SBD.Alokacje a

@@ -185,6 +185,45 @@ namespace SQLWMS
             return null;
         }
 
+        private void NestedDetailsDataGrid_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (sender is not DependencyObject source)
+            {
+                return;
+            }
+
+            DataGridRow? ownerRow = FindVisualParent<DataGridRow>(source);
+            if (ownerRow is null)
+            {
+                return;
+            }
+
+            System.Windows.Controls.DataGrid? parentGrid = FindVisualParent<System.Windows.Controls.DataGrid>(ownerRow);
+            if (parentGrid is null)
+            {
+                return;
+            }
+
+            ScrollViewer? scrollViewer = FindVisualParent<ScrollViewer>(parentGrid);
+            if (scrollViewer is null)
+            {
+                return;
+            }
+
+            e.Handled = true;
+
+            if (e.Delta > 0)
+            {
+                scrollViewer.LineUp();
+                return;
+            }
+
+            if (e.Delta < 0)
+            {
+                scrollViewer.LineDown();
+            }
+        }
+
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             ShowHome();

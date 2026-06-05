@@ -133,7 +133,7 @@ ORDER BY Cecha;";
                 }
 
                 product.DetailsLoaded = true;
-                product.IsExpanded = _variants.Count > 0;
+                product.IsExpanded = false;
                 product.DetailStatus = _variants.Count switch
                 {
                     0 => "Towar bez wariantow.",

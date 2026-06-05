@@ -555,9 +555,12 @@ ORDER BY Id;";
 
         private static SqlParameter CreateNullableDateTimeParameter(string name, DateTime? value)
         {
-            return new SqlParameter(name, SqlDbType.DateTime)
+            return new SqlParameter(name, SqlDbType.DateTime2)
             {
-                Value = value.HasValue ? value.Value.Date : DBNull.Value
+                Scale = 0,
+                Value = value.HasValue
+                    ? DateTime.SpecifyKind(value.Value.Date, DateTimeKind.Unspecified)
+                    : DBNull.Value
             };
         }
 

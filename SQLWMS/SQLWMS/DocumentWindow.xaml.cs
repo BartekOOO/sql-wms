@@ -117,42 +117,18 @@ namespace SQLWMS
                 return;
             }
 
-            _suppressAutoPersist = true;
-            SaveButton.IsEnabled = false;
+            await FinalizeDocumentCloseAsync(skipUpdate: false);
+        }
 
-            try
+        private async void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isReadOnlyMode)
             {
-                bool updateSucceeded = await PersistDocumentChangesAsync(force: true, showErrors: true);
-                if (!updateSucceeded)
-                {
-                    _suppressAutoPersist = false;
-                    SaveButton.IsEnabled = true;
-                    SetDocumentActionButtonsEnabled(true);
-                    return;
-                }
-
-                _isFinalizing = true;
-                DocumentProcedureResult closeResult = await _documentCatalogService.CloseDocumentAsync(_documentId, _operatorCode);
-                if (!closeResult.IsSuccess)
-                {
-                    _isFinalizing = false;
-                    _suppressAutoPersist = false;
-                    AppDialogWindow.Show(this, "Zamykanie dokumentu", closeResult.Message, AppDialogKind.Warning);
-                    SaveButton.IsEnabled = true;
-                    SetDocumentActionButtonsEnabled(true);
-                    return;
-                }
-
-                CloseDocumentWindow(true);
+                CloseDocumentWindow(false);
+                return;
             }
-            catch (Exception ex)
-            {
-                _isFinalizing = false;
-                _suppressAutoPersist = false;
-                AppDialogWindow.Show(this, "Edycja dokumentu", ex.Message, AppDialogKind.Error);
-                SaveButton.IsEnabled = true;
-                SetDocumentActionButtonsEnabled(true);
-            }
+
+            await FinalizeDocumentCloseAsync(skipUpdate: true);
         }
 
         private async void DocumentActionButton_Click(object sender, RoutedEventArgs e)
@@ -448,6 +424,8 @@ namespace SQLWMS
             DestinationSectorComboBox.IsEnabled = canEditDestination && DestinationWarehouseComboBox.SelectedValue is not null;
             DestinationSectorClearButton.IsEnabled = canEditDestination && DestinationSectorComboBox.IsEnabled && DestinationSectorComboBox.SelectedItem is not null;
             ConfigureDocumentActionButtons(canEdit);
+            CloseButton.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
+            CloseButton.IsEnabled = canEdit;
             SaveButton.Content = canEdit ? "Zapisz i zamknij" : "Zamknij";
         }
 
@@ -836,6 +814,51 @@ namespace SQLWMS
         {
             DocumentActionButton.IsEnabled = isEnabled && DocumentActionButton.Visibility == Visibility.Visible;
             SecondaryDocumentActionButton.IsEnabled = isEnabled && SecondaryDocumentActionButton.Visibility == Visibility.Visible;
+            CloseButton.IsEnabled = isEnabled && CloseButton.Visibility == Visibility.Visible;
+        }
+
+        private async Task FinalizeDocumentCloseAsync(bool skipUpdate)
+        {
+            _suppressAutoPersist = true;
+            SaveButton.IsEnabled = false;
+            SetDocumentActionButtonsEnabled(false);
+
+            try
+            {
+                if (!skipUpdate)
+                {
+                    bool updateSucceeded = await PersistDocumentChangesAsync(force: true, showErrors: true);
+                    if (!updateSucceeded)
+                    {
+                        _suppressAutoPersist = false;
+                        SaveButton.IsEnabled = true;
+                        SetDocumentActionButtonsEnabled(true);
+                        return;
+                    }
+                }
+
+                _isFinalizing = true;
+                DocumentProcedureResult closeResult = await _documentCatalogService.CloseDocumentAsync(_documentId, _operatorCode);
+                if (!closeResult.IsSuccess)
+                {
+                    _isFinalizing = false;
+                    _suppressAutoPersist = false;
+                    AppDialogWindow.Show(this, "Zamykanie dokumentu", closeResult.Message, AppDialogKind.Warning);
+                    SaveButton.IsEnabled = true;
+                    SetDocumentActionButtonsEnabled(true);
+                    return;
+                }
+
+                CloseDocumentWindow(true);
+            }
+            catch (Exception ex)
+            {
+                _isFinalizing = false;
+                _suppressAutoPersist = false;
+                AppDialogWindow.Show(this, skipUpdate ? "Zamykanie dokumentu" : "Edycja dokumentu", ex.Message, AppDialogKind.Error);
+                SaveButton.IsEnabled = true;
+                SetDocumentActionButtonsEnabled(true);
+            }
         }
 
         private bool ConfirmDocumentAction(string action)

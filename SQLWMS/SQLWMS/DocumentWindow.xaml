@@ -405,6 +405,14 @@
                         Style="{StaticResource FooterActionButtonStyle}"
                         Click="DocumentActionButton_Click"
                         Visibility="Collapsed" />
+                    <Button x:Name="CloseButton"
+                        Width="130"
+                        Height="32"
+                        Margin="0,0,10,0"
+                        Style="{StaticResource GhostActionButtonStyle}"
+                        Click="CloseButton_Click"
+                        Content="Zamknij"
+                        Visibility="Collapsed" />
                         <Button x:Name="SaveButton"
                                 Width="160"
                                 Height="32"

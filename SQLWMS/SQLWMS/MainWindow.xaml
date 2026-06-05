@@ -1114,7 +1114,7 @@
                                                 <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
                                                     <Setter Property="DetailsVisibility" Value="Collapsed" />
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasVariants}" Value="True">
+                                                        <DataTrigger Binding="{Binding IsExpanded}" Value="True">
                                                             <Setter Property="DetailsVisibility" Value="Visible" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
@@ -1127,7 +1127,8 @@
                                                             Background="#FFF8F3EA"
                                                             BorderBrush="#DCCFC0"
                                                             BorderThickness="1"
-                                                            CornerRadius="2">
+                                                            CornerRadius="2"
+                                                            PreviewMouseWheel="NestedDetailsDataGrid_PreviewMouseWheel">
                                                         <StackPanel>
                                                             <TextBlock Text="{Binding DetailStatus}"
                                                                        Foreground="{StaticResource MutedBrush}"
@@ -1136,6 +1137,7 @@
                                                                       Margin="0,8,0,0"
                                                                       AutoGenerateColumns="False"
                                                                       IsReadOnly="True"
+                                                                      Focusable="False"
                                                                       CanUserAddRows="False"
                                                                       CanUserDeleteRows="False"
                                                                       CanUserSortColumns="True"
@@ -1151,6 +1153,7 @@
                                                                       Background="White"
                                                                       BorderBrush="#E0D5C8"
                                                                       BorderThickness="1"
+                                                                      PreviewMouseWheel="NestedDetailsDataGrid_PreviewMouseWheel"
                                                                       ScrollViewer.CanContentScroll="False"
                                                                       ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -1164,8 +1167,29 @@
                                                 </DataTemplate>
                                             </DataGrid.RowDetailsTemplate>
                                             <DataGrid.Columns>
+                                                <DataGridTemplateColumn Header="" Width="34" IsReadOnly="True">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <ToggleButton IsChecked="{Binding IsExpanded, Mode=TwoWay}"
+                                                                          Checked="ProductExpander_Checked"
+                                                                          Unchecked="MasterExpander_Unchecked">
+                                                                <ToggleButton.Style>
+                                                                    <Style TargetType="ToggleButton" BasedOn="{StaticResource SectionExpanderToggleStyle}">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding HasVariants}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </ToggleButton.Style>
+                                                            </ToggleButton>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
                                                 <DataGridTextColumn Header="Kod" Binding="{Binding Kod}" Width="120" SortMemberPath="Kod" />
                                                 <DataGridTextColumn Header="Nazwa" Binding="{Binding Nazwa}" Width="*" SortMemberPath="Nazwa" />
+                                                <DataGridTextColumn Header="Ilosc" Binding="{Binding SumaIlosci, StringFormat=N2}" Width="130" SortMemberPath="SumaIlosci" />
                                             </DataGrid.Columns>
                                         </DataGrid>
 
@@ -1212,7 +1236,8 @@
                                                             Background="#FFF8F3EA"
                                                             BorderBrush="#DCCFC0"
                                                             BorderThickness="1"
-                                                            CornerRadius="2">
+                                                            CornerRadius="2"
+                                                            PreviewMouseWheel="NestedDetailsDataGrid_PreviewMouseWheel">
                                                         <StackPanel>
                                                             <TextBlock Text="{Binding DetailStatus}"
                                                                        Foreground="{StaticResource MutedBrush}"
@@ -1221,6 +1246,7 @@
                                                                       Margin="0,8,0,0"
                                                                       AutoGenerateColumns="False"
                                                                       IsReadOnly="True"
+                                                                      Focusable="False"
                                                                       CanUserAddRows="False"
                                                                       CanUserDeleteRows="False"
                                                                       CanUserSortColumns="True"
@@ -1236,6 +1262,7 @@
                                                                       Background="White"
                                                                       BorderBrush="#E0D5C8"
                                                                       BorderThickness="1"
+                                                                      PreviewMouseWheel="NestedDetailsDataGrid_PreviewMouseWheel"
                                                                       ScrollViewer.CanContentScroll="False"
                                                                       ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
