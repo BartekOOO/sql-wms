@@ -541,3 +541,4 @@ FROM SBD.Towary t
 JOIN SBD.Jednostki j ON j.TowarId = t.Id
 ORDER BY t.Kod, j.Przelicznik, j.Kod;
 GO
+

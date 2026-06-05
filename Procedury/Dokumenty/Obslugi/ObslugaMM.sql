@@ -24,7 +24,48 @@ SET XACT_ABORT ON;
 			IF (SELECT COUNT(*) FROM SBD.Pozycje WHERE DokumentId = @Id) = 0
 				THROW 51029, N'dokument nie posiada ¿adnych pozycji.', 1
 
+			DECLARE @SektorDocelowy INT, @SektorZrodlowy INT;
+			DECLARE @MagazynDocelowy INT, @MagazynZrodlowy INT;
+			SELECT @SektorDocelowy = SektorDocelowyId,
+				   @SektorZrodlowy = SektorZrodlowyId,
+				   @MagazynDocelowy = MagazynDocelowyId,
+				   @MagazynZrodlowy = MagazynZrodlowyId FROM SBD.Dokumenty WHERE Id = @Id
+
+			IF @SektorDocelowy IS NULL
+			BEGIN
+
+			END
+
+			IF @SektorZrodlowy IS NULL
+			BEGIN
+
+
+			END
+
+
+			DECLARE @AlokacjaId INT;
 			
+			DECLARE kursorAlokacji CURSOR FAST_FORWARD FOR
+			    SELECT Id FROM SBD.Alokacje WHERE DokumentId = @Id;
+			
+			OPEN kursorAlokacji;
+			
+			FETCH NEXT FROM curCursor INTO @AlokacjaId;
+			
+			WHILE @@FETCH_STATUS = 0
+			BEGIN
+			
+			   
+
+
+
+			
+			    FETCH NEXT FROM kursorAlokacji INTO @AlokacjaId;
+			END
+			
+			CLOSE kursorAlokacji;
+			DEALLOCATE kursorAlokacji;
+
 
 			UPDATE SBD.Dokumenty SET [Status] = N'Zatwierdzony' WHERE ID = @Id
 	END

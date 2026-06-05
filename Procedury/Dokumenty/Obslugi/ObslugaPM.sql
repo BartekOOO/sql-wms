@@ -28,72 +28,63 @@ SET XACT_ABORT ON;
 			IF (SELECT COUNT(*) FROM SBD.Pozycje WHERE DokumentId = @Id) = 0
 				THROW 51029, N'dokument nie posiada ¿adnych pozycji.', 1
 
-			DECLARE @AlokacjaId INT;
-			DECLARE kursorPozycji CURSOR FAST_FORWARD FOR
-			    SELECT Id FROM SBD.Alokacje WHERE DokumentId = @Id;
-			OPEN kursorPozycji;
-			
-			FETCH NEXT FROM kursorPozycji INTO @AlokacjaId;
-			
-			WHILE @@FETCH_STATUS = 0
+			DECLARE @SektorDocelowy INT;
+			DECLARE @MagazynDocelowy INT;
+
+			SELECT 
+			      @SektorDocelowy = SektorDocelowyId
+			    , @MagazynDocelowy = MagazynDocelowyId
+			FROM SBD.Dokumenty
+			WHERE Id = @Id;
+
+			IF @SektorDocelowy IS NULL
 			BEGIN
+			    SELECT TOP 1
+			        @SektorDocelowy = s.Id
+			    FROM SBD.Sektory s
+			    LEFT JOIN SBD.Dostawy d
+			        ON d.SektorId = s.Id
+			       AND d.MagazynId = @MagazynDocelowy
+			    WHERE s.MagazynId = @MagazynDocelowy
+			    GROUP BY s.Id
+			    ORDER BY ISNULL(SUM(d.Ilosc), 0) ASC, s.Id ASC;
 
-				--Przygotowanie wstêpnych danych
-				SELECT p.TowarId, p.TowarKod, p.TowarNazwa, d.MagazynDocelowyId, d.SektorDocelowyId,
-					p.Id AS ZakladajacaPozycja, a.Ilosc, GETDATE() AS DataUtworzenia, CAST(NULL AS DATETIME2(0)) AS DataModyfikacji,
-					a.Cecha AS Cecha, a.Id AS ZakladajacaAlokacja
-				INTO #dane
-				FROM SBD.Alokacje a
-					JOIN SBD.Pozycje p ON p.Id = a.PozycjaId
-					JOIN SBD.Dokumenty d ON d.Id = a.DokumentId
-				WHERE a.Id = @AlokacjaId
-			
-				IF (SELECT COUNT(*) FROM #dane) > 1
-					THROW 51029, N'wyst¹pi³ b³¹d integralnoœci danych. Zapytanie zwróci³o wiêcej ni¿ jedn¹ alokacjê z tym samym identyfikatorem.', 1
+			    IF @SektorDocelowy IS NULL
+			        THROW 51029, N'nie uda³o siê wyznaczyæ sektora docelowego dla dokumentu PM.', 1;
+			END;
 
-				IF EXISTS
-				(
-				    SELECT 1
-				    FROM SBD.Dostawy
-				    WHERE ZakladajacaAlokacjaId = @AlokacjaId
-				)
-				THROW 51029, N'dostawa dla tej alokacji zosta³a ju¿ za³o¿ona.', 1;
-
-
-				IF EXISTS (SELECT 1 FROM #dane WHERE SektorDocelowyId IS NULL)
-				BEGIN
-				    UPDATE dan
-				        SET dan.SektorDocelowyId = NajmniejZapelnionySektor.SektorId
-				    FROM #dane dan
-				    OUTER APPLY
-				    (
-				        SELECT TOP 1
-				              s.Id AS SektorId
-				            , ISNULL(SUM(d.Ilosc), 0) AS Ilosc
-				        FROM SBD.Sektory s
-				        LEFT JOIN SBD.Dostawy d
-				            ON d.SektorId = s.Id
-				           AND d.MagazynId = dan.MagazynDocelowyId
-				           AND d.Cecha = dan.Cecha
-				        WHERE s.MagazynId = dan.MagazynDocelowyId
-				        GROUP BY s.Id
-				        ORDER BY ISNULL(SUM(d.Ilosc), 0) ASC, s.Id ASC
-				    ) NajmniejZapelnionySektor
-				    WHERE dan.SektorDocelowyId IS NULL;
-				END
-
-			    INSERT INTO SBD.Dostawy 
-				(TowarId, TowarKod, TowarNazwa, MagazynId, SektorId, ZakladajacaPozycjaId, Ilosc
-					, DataUtworzenia, DataModyfikacji, Cecha, ZakladajacaAlokacjaId, ZrodlowaAlokacjaId)
-				SELECT TowarId, TowarKod, TowarNazwa, MagazynDocelowyId, SektorDocelowyId, ZakladajacaPozycja, Ilosc
-				,	DataUtworzenia, DataModyfikacji, Cecha, ZakladajacaAlokacja, ZakladajacaAlokacja FROM #dane
-
-				DROP TABLE #dane
-			    FETCH NEXT FROM kursorPozycji INTO @AlokacjaId;
-			END
-			
-			CLOSE kursorPozycji;
-			DEALLOCATE kursorPozycji;
+			INSERT INTO SBD.Dostawy
+			(
+			      TowarId
+			    , TowarKod
+			    , TowarNazwa
+			    , MagazynId
+			    , SektorId
+			    , ZakladajacaPozycjaId
+			    , Ilosc
+			    , DataUtworzenia
+			    , DataModyfikacji
+			    , Cecha
+			    , ZakladajacaAlokacjaId
+			    , ZrodlowaAlokacjaId
+			)
+			SELECT
+			      p.TowarId
+			    , p.TowarKod
+			    , p.TowarNazwa
+			    , @MagazynDocelowy
+			    , @SektorDocelowy
+			    , p.Id
+			    , a.Ilosc
+			    , SYSDATETIME()
+			    , CAST(NULL AS DATETIME2(0))
+			    , a.Cecha
+			    , a.Id
+			    , a.Id
+			FROM SBD.Alokacje a
+			JOIN SBD.Pozycje p
+			    ON p.Id = a.PozycjaId
+			WHERE a.DokumentId = @Id;
 
 			UPDATE SBD.Dokumenty SET [Status] = N'Zatwierdzony' WHERE ID = @Id
 	END
