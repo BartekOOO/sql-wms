@@ -76,3 +76,12 @@ BEGIN
         REFERENCES SBD.Alokacje(Id);
 END
 GO
+
+
+IF OBJECT_ID(N'SBD.Dostawy', N'U') IS NOT NULL
+AND COL_LENGTH(N'SBD.Dostawy', N'ZrodlowaAlokacjaId') IS NULL
+BEGIN
+    ALTER TABLE SBD.Dostawy
+    ADD ZrodlowaAlokacjaId INT NULL;
+END
+GO

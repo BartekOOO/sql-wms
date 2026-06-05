@@ -985,14 +985,20 @@
 
                                                     <Separator />
 
-                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Usun {0}, TargetNullValue=Usun wybrany dokument, FallbackValue=Usun wybrany dokument}">
+                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Usun {0}, TargetNullValue=Usun wybrany dokument, FallbackValue=Usun wybrany dokument}"
+                                                              Tag="Usun"
+                                                              Click="ExecuteSelectedDocumentActionMenuItem_Click">
                                                         <MenuItem.Style>
                                                             <Style TargetType="MenuItem">
-                                                                <Setter Property="IsEnabled" Value="True" />
+                                                                <Setter Property="IsEnabled" Value="False" />
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding SelectedItem}" Value="{x:Null}">
-                                                                        <Setter Property="IsEnabled" Value="False" />
-                                                                    </DataTrigger>
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding SelectedItem.StatusDokumentu}" Value="Szkic" />
+                                                                            <Condition Binding="{Binding SelectedItem.IsOpened}" Value="False" />
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <Setter Property="IsEnabled" Value="True" />
+                                                                    </MultiDataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </MenuItem.Style>
@@ -1004,14 +1010,20 @@
                                                         </MenuItem.Icon>
                                                     </MenuItem>
 
-                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Zatwierdz {0}, TargetNullValue=Zatwierdz wybrany dokument, FallbackValue=Zatwierdz wybrany dokument}">
+                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Zatwierdz {0}, TargetNullValue=Zatwierdz wybrany dokument, FallbackValue=Zatwierdz wybrany dokument}"
+                                                              Tag="Zatwierdz"
+                                                              Click="ExecuteSelectedDocumentActionMenuItem_Click">
                                                         <MenuItem.Style>
                                                             <Style TargetType="MenuItem">
-                                                                <Setter Property="IsEnabled" Value="True" />
+                                                                <Setter Property="IsEnabled" Value="False" />
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding SelectedItem}" Value="{x:Null}">
-                                                                        <Setter Property="IsEnabled" Value="False" />
-                                                                    </DataTrigger>
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding SelectedItem.StatusDokumentu}" Value="Szkic" />
+                                                                            <Condition Binding="{Binding SelectedItem.IsOpened}" Value="False" />
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <Setter Property="IsEnabled" Value="True" />
+                                                                    </MultiDataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </MenuItem.Style>
@@ -1023,14 +1035,20 @@
                                                         </MenuItem.Icon>
                                                     </MenuItem>
 
-                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Anuluj {0}, TargetNullValue=Anuluj wybrany dokument, FallbackValue=Anuluj wybrany dokument}">
+                                                    <MenuItem Header="{Binding SelectedItem.NumerDokumentu, StringFormat=Anuluj {0}, TargetNullValue=Anuluj wybrany dokument, FallbackValue=Anuluj wybrany dokument}"
+                                                              Tag="Anuluj"
+                                                              Click="ExecuteSelectedDocumentActionMenuItem_Click">
                                                         <MenuItem.Style>
                                                             <Style TargetType="MenuItem">
-                                                                <Setter Property="IsEnabled" Value="True" />
+                                                                <Setter Property="IsEnabled" Value="False" />
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding SelectedItem}" Value="{x:Null}">
-                                                                        <Setter Property="IsEnabled" Value="False" />
-                                                                    </DataTrigger>
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding SelectedItem.StatusDokumentu}" Value="Zatwierdzony" />
+                                                                            <Condition Binding="{Binding SelectedItem.IsOpened}" Value="False" />
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <Setter Property="IsEnabled" Value="True" />
+                                                                    </MultiDataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </MenuItem.Style>

@@ -9,12 +9,25 @@ SET XACT_ABORT ON;
 
 	IF @Akcja = N'Anuluj'
 		BEGIN
-			SET NOCOUNT OFF;
-			THROW 51029, N'mechanika jeszcze nie zaimplementowana', 1
+			IF EXISTS (SELECT 1 FROM SBD.Alokacje a 
+				JOIN SBD.Dostawy d ON d.ZakladajacaAlokacjaId = a.Id
+				WHERE a.DokumentId = @Id AND a.Ilosc <> d.Ilosc)
+				THROW 51029, N'dostawy tego dokumentu zosta³y przesuniête dalej.', 1
+
+			UPDATE dos
+				SET dos.Ilosc = 0
+			FROM SBD.Dostawy dos
+			JOIN SBD.Alokacje a ON a.Id = dos.ZakladajacaAlokacjaId
+			WHERE a.DokumentId = @Id
+
+			UPDATE SBD.Dokumenty SET [Status] = N'Anulowany' WHERE ID = @Id
 		END
 	ELSE IF @Akcja = N'Zatwierdz'
 		BEGIN
 			
+			IF (SELECT COUNT(*) FROM SBD.Pozycje WHERE DokumentId = @Id) = 0
+				THROW 51029, N'dokument nie posiada ¿adnych pozycji.', 1
+
 			DECLARE @AlokacjaId INT;
 			DECLARE kursorPozycji CURSOR FAST_FORWARD FOR
 			    SELECT Id FROM SBD.Alokacje WHERE DokumentId = @Id;
@@ -71,9 +84,9 @@ SET XACT_ABORT ON;
 
 			    INSERT INTO SBD.Dostawy 
 				(TowarId, TowarKod, TowarNazwa, MagazynId, SektorId, ZakladajacaPozycjaId, Ilosc
-					, DataUtworzenia, DataModyfikacji, Cecha, ZakladajacaAlokacjaId)
+					, DataUtworzenia, DataModyfikacji, Cecha, ZakladajacaAlokacjaId, ZrodlowaAlokacjaId)
 				SELECT TowarId, TowarKod, TowarNazwa, MagazynDocelowyId, SektorDocelowyId, ZakladajacaPozycja, Ilosc
-				,	DataUtworzenia, DataModyfikacji, Cecha, ZakladajacaAlokacja	FROM #dane
+				,	DataUtworzenia, DataModyfikacji, Cecha, ZakladajacaAlokacja, ZakladajacaAlokacja FROM #dane
 
 				DROP TABLE #dane
 			    FETCH NEXT FROM kursorPozycji INTO @AlokacjaId;

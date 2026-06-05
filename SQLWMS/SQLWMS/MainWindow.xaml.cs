@@ -28,6 +28,7 @@ namespace SQLWMS
         private readonly ICollectionView _productsView;
         private readonly ICollectionView _warehousesView;
         private bool _isOpeningDocument;
+        private bool _isExecutingDocumentAction;
         private int _documentsCurrentPage = 1;
         private int _documentsTotalCount;
         private int _filterRequestVersion;
@@ -301,6 +302,16 @@ namespace SQLWMS
                 AppDialogWindow.Show(this, "Zakladanie dokumentu", ex.Message, AppDialogKind.Error);
                 await ReloadCurrentSectionAsync();
             }
+        }
+
+        private async void ExecuteSelectedDocumentActionMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not System.Windows.Controls.MenuItem { Tag: string action })
+            {
+                return;
+            }
+
+            await ExecuteSelectedDocumentActionFromGridAsync(action);
         }
 
         private async Task<bool> PromptUserLoginAsync(bool forcePrompt)
@@ -798,6 +809,82 @@ namespace SQLWMS
             }
         }
 
+        private async Task ExecuteSelectedDocumentActionFromGridAsync(string action)
+        {
+            if (_isExecutingDocumentAction)
+            {
+                return;
+            }
+
+            if (DocumentsDataGrid.SelectedItem is not DocumentListItem selectedDocument)
+            {
+                return;
+            }
+
+            if (!CanExecuteDocumentAction(selectedDocument, action))
+            {
+                return;
+            }
+
+            if (!await PromptUserLoginAsync(forcePrompt: false))
+            {
+                return;
+            }
+
+            if (!ConfirmDocumentAction(action))
+            {
+                return;
+            }
+
+            _isExecutingDocumentAction = true;
+            bool lockAcquired = false;
+
+            try
+            {
+                DocumentProcedureResult openResult = await _documentCatalogService.OpenDocumentAsync(selectedDocument.Id, _userSessionService.CurrentUser);
+                if (!openResult.IsSuccess)
+                {
+                    AppDialogWindow.Show(this, GetDocumentActionTitle(action), openResult.Message, AppDialogKind.Warning);
+                    await ReloadCurrentSectionAsync();
+                    return;
+                }
+
+                lockAcquired = true;
+
+                DocumentProcedureResult actionResult = await _documentCatalogService.CloseDocumentAsync(selectedDocument.Id, _userSessionService.CurrentUser, action);
+                if (!actionResult.IsSuccess)
+                {
+                    await ReleaseDocumentLockAsync(selectedDocument.Id);
+                    lockAcquired = false;
+                    AppDialogWindow.Show(this, GetDocumentActionTitle(action), actionResult.Message, AppDialogKind.Warning);
+                    await ReloadCurrentSectionAsync();
+                    return;
+                }
+
+                await ReloadCurrentSectionAsync();
+            }
+            catch (Exception ex)
+            {
+                if (lockAcquired)
+                {
+                    await ReleaseDocumentLockAsync(selectedDocument.Id);
+                    lockAcquired = false;
+                }
+
+                AppDialogWindow.Show(this, GetDocumentActionTitle(action), ex.Message, AppDialogKind.Error);
+                await ReloadCurrentSectionAsync();
+            }
+            finally
+            {
+                if (lockAcquired)
+                {
+                    await ReleaseDocumentLockAsync(selectedDocument.Id);
+                }
+
+                _isExecutingDocumentAction = false;
+            }
+        }
+
         private async Task OpenDocumentAsync(int documentId)
         {
             DocumentProcedureResult openResult = await _documentCatalogService.OpenDocumentAsync(documentId, _userSessionService.CurrentUser);
@@ -877,6 +964,65 @@ namespace SQLWMS
         private int GetDocumentsTotalPages()
         {
             return Math.Max(1, (int)Math.Ceiling(_documentsTotalCount / (double)DocumentsPageSize));
+        }
+
+        private static bool CanExecuteDocumentAction(DocumentListItem document, string action)
+        {
+            if (document.IsOpened)
+            {
+                return false;
+            }
+
+            string status = document.StatusDokumentu.Trim();
+            return action switch
+            {
+                "Usun" or "Zatwierdz" => string.Equals(status, "Szkic", StringComparison.OrdinalIgnoreCase),
+                "Anuluj" => string.Equals(status, "Zatwierdzony", StringComparison.OrdinalIgnoreCase),
+                _ => false
+            };
+        }
+
+        private bool ConfirmDocumentAction(string action)
+        {
+            string message = action switch
+            {
+                "Usun" => "Czy na pewno chcesz usunac ten dokument?",
+                "Zatwierdz" => "Czy na pewno chcesz zatwierdzic ten dokument?",
+                "Anuluj" => "Czy na pewno chcesz anulowac ten dokument?",
+                _ => "Czy na pewno chcesz wykonac te akcje?"
+            };
+
+            string confirmText = action switch
+            {
+                "Usun" => "Usun",
+                "Zatwierdz" => "Zatwierdz",
+                "Anuluj" => "Anuluj",
+                _ => "Potwierdz"
+            };
+
+            return AppDialogWindow.Confirm(this, GetDocumentActionTitle(action), message, confirmText, "Nie", AppDialogKind.Warning);
+        }
+
+        private async Task ReleaseDocumentLockAsync(int documentId)
+        {
+            try
+            {
+                await _documentCatalogService.CloseDocumentAsync(documentId, _userSessionService.CurrentUser);
+            }
+            catch
+            {
+            }
+        }
+
+        private static string GetDocumentActionTitle(string action)
+        {
+            return action switch
+            {
+                "Usun" => "Usuwanie dokumentu",
+                "Zatwierdz" => "Zatwierdzanie dokumentu",
+                "Anuluj" => "Anulowanie dokumentu",
+                _ => "Potwierdzenie akcji"
+            };
         }
 
         private void UpdateDocumentsPagination()
