@@ -288,6 +288,7 @@
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Cecha" Binding="{Binding DisplayFeature}" Width="*" />
                                         <DataGridTextColumn Header="Kierunek" Binding="{Binding Direction}" Width="120" />
+                                        <DataGridTextColumn Header="Dokument zrodlowy" Binding="{Binding SourceDocumentNumber}" Width="210" />
                                         <DataGridTextColumn Header="Ilosc" Binding="{Binding UnitQuantity, StringFormat={}{0:0.###}}" Width="140" />
                                         <DataGridTextColumn Header="Ilosc podstawowa" Binding="{Binding Quantity, StringFormat={}{0:0.###}}" Width="170" />
                                         <DataGridTextColumn Header="Jednostka" Binding="{Binding UnitCode}" Width="120" />

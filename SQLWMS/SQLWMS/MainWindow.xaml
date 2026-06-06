@@ -866,7 +866,7 @@
                                             Style="{StaticResource SectionActionButtonStyle}"
                                             Click="DocumentAdvancedFiltersButton_Click"
                                             Content="Filtry"
-                                            ToolTip="Dodatkowe filtry po magazynie, sektorze i towarze" />
+                                            ToolTip="Dodatkowe filtry po magazynie, sektorze, towarze i serii" />
 
                                         <Button x:Name="DocumentAdvancedFiltersResetButton"
                                             Grid.Column="8"

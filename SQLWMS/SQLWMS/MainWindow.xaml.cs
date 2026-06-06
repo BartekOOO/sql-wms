@@ -36,6 +36,7 @@ namespace SQLWMS
         private string _documentWarehouseFilter = string.Empty;
         private string _documentSectorFilter = string.Empty;
         private string _documentProductFilter = string.Empty;
+        private string _documentSeriesFilter = string.Empty;
         private NavigationSection _currentSection = NavigationSection.Home;
 
         private enum NavigationSection
@@ -375,7 +376,8 @@ namespace SQLWMS
                 _documentCatalogService,
                 _documentWarehouseFilter,
                 _documentSectorFilter,
-                _documentProductFilter)
+                _documentProductFilter,
+                _documentSeriesFilter)
             {
                 Owner = this
             };
@@ -389,6 +391,7 @@ namespace SQLWMS
             _documentWarehouseFilter = filtersWindow.SelectedWarehouseCode;
             _documentSectorFilter = filtersWindow.SelectedSectorCode;
             _documentProductFilter = filtersWindow.SelectedProductCode;
+            _documentSeriesFilter = filtersWindow.SelectedSeries;
             _documentsCurrentPage = 1;
             UpdateDocumentAdvancedFilterButtons();
             await ReloadCurrentSectionAsync();
@@ -531,7 +534,8 @@ namespace SQLWMS
                     documentStatusFilter,
                     _documentWarehouseFilter,
                     _documentSectorFilter,
-                    _documentProductFilter);
+                    _documentProductFilter,
+                    _documentSeriesFilter);
 
                 if (requestVersion != _filterRequestVersion || _currentSection != NavigationSection.Documents)
                 {
@@ -735,13 +739,15 @@ namespace SQLWMS
             _documentWarehouseFilter = string.Empty;
             _documentSectorFilter = string.Empty;
             _documentProductFilter = string.Empty;
+            _documentSeriesFilter = string.Empty;
         }
 
         private bool HasDocumentAdvancedFilters()
         {
             return !string.IsNullOrWhiteSpace(_documentWarehouseFilter)
                 || !string.IsNullOrWhiteSpace(_documentSectorFilter)
-                || !string.IsNullOrWhiteSpace(_documentProductFilter);
+                || !string.IsNullOrWhiteSpace(_documentProductFilter)
+                || !string.IsNullOrWhiteSpace(_documentSeriesFilter);
         }
 
         private void UpdateDocumentAdvancedFilterButtons()
@@ -754,7 +760,7 @@ namespace SQLWMS
             bool hasFilters = HasDocumentAdvancedFilters();
             DocumentAdvancedFiltersButton.ToolTip = hasFilters
                 ? BuildDocumentAdvancedFiltersTooltip()
-                : "Dodatkowe filtry po magazynie, sektorze i towarze";
+                : "Dodatkowe filtry po magazynie, sektorze, towarze i serii";
             DocumentAdvancedFiltersResetButton.IsEnabled = hasFilters;
             DocumentAdvancedFiltersResetButton.Opacity = hasFilters ? 1 : 0.5;
         }
@@ -776,6 +782,11 @@ namespace SQLWMS
             if (!string.IsNullOrWhiteSpace(_documentProductFilter))
             {
                 parts.Add($"Towar: {_documentProductFilter}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(_documentSeriesFilter))
+            {
+                parts.Add($"Seria: {_documentSeriesFilter}");
             }
 
             return string.Join(Environment.NewLine, parts);

@@ -17,12 +17,14 @@ namespace SQLWMS.Services
             string? documentStatusFilter,
             string? warehouseFilter,
             string? sectorFilter,
-            string? productFilter)
+            string? productFilter,
+            string? seriesFilter)
         {
             bool useProcedure = string.IsNullOrWhiteSpace(documentStatusFilter)
                 && string.IsNullOrWhiteSpace(warehouseFilter)
                 && string.IsNullOrWhiteSpace(sectorFilter)
-                && string.IsNullOrWhiteSpace(productFilter);
+                && string.IsNullOrWhiteSpace(productFilter)
+                && string.IsNullOrWhiteSpace(seriesFilter);
 
             return useProcedure
                 ? await LoadDocumentsViaProcedureAsync(pageNumber, pageSize, documentNumberFilter, documentTypeFilter)
@@ -34,7 +36,8 @@ namespace SQLWMS.Services
                     documentStatusFilter,
                     warehouseFilter,
                     sectorFilter,
-                    productFilter);
+                    productFilter,
+                    seriesFilter);
         }
 
         private async Task<DocumentPageResult> LoadDocumentsViaProcedureAsync(int pageNumber, int pageSize, string? documentNumberFilter, string? documentTypeFilter)
@@ -63,7 +66,8 @@ namespace SQLWMS.Services
             string? documentStatusFilter,
             string? warehouseFilter,
             string? sectorFilter,
-            string? productFilter)
+            string? productFilter,
+            string? seriesFilter)
         {
             const string sql = @"
 SELECT
@@ -84,6 +88,7 @@ WHERE (@NumerDokumentu = N'' OR d.NumerDokumentu LIKE N'%' + @NumerDokumentu + N
   AND (@StatusDokumentu = N'' OR d.StatusDokumentu = @StatusDokumentu)
     AND (@MagazynKod = N'' OR d.MagazynZrodlowyKod = @MagazynKod OR d.MagazynDocelowyKod = @MagazynKod)
     AND (@SektorKod = N'' OR d.SektorZrodlowyKod = @SektorKod OR d.SektorDocelowyKod = @SektorKod)
+        AND (@SeriaDokumentu = N'' OR d.SeriaDokumentu = @SeriaDokumentu)
     AND (@TowarKod = N'' OR EXISTS (
                 SELECT 1
                 FROM SBD.Pozycje p
@@ -103,6 +108,7 @@ FETCH NEXT @WielkoscStrony ROWS ONLY;";
                     command.Parameters.Add(new SqlParameter("@StatusDokumentu", documentStatusFilter ?? string.Empty));
                     command.Parameters.Add(new SqlParameter("@MagazynKod", warehouseFilter ?? string.Empty));
                     command.Parameters.Add(new SqlParameter("@SektorKod", sectorFilter ?? string.Empty));
+                    command.Parameters.Add(new SqlParameter("@SeriaDokumentu", seriesFilter ?? string.Empty));
                     command.Parameters.Add(new SqlParameter("@TowarKod", productFilter ?? string.Empty));
                     command.Parameters.Add(new SqlParameter("@Offset", (pageNumber - 1) * pageSize));
                     command.Parameters.Add(new SqlParameter("@WielkoscStrony", pageSize));
@@ -304,6 +310,7 @@ SELECT
       a.Id AS AlokacjaId
     , a.Cecha AS AlokacjaCecha
     , a.Kierunek AS AlokacjaKierunek
+        , av.ZrodlowyNumerDokumentu AS ZrodlowyNumerDokumentu
     , a.Ilosc AS Ilosc
     , CASE
           WHEN p.JednostkaPrzelicznik IS NULL OR p.JednostkaPrzelicznik = 0 THEN a.Ilosc
@@ -312,6 +319,7 @@ SELECT
         , p.JednostkaKod AS Jednostka
 FROM SBD.Alokacje a
 JOIN SBD.Pozycje p ON p.Id = a.PozycjaId
+LEFT JOIN SBD.AlokacjeView av ON av.AlokacjaId = a.Id
 WHERE a.PozycjaId = @PozycjaId
 ORDER BY a.Id;";
 
@@ -322,6 +330,7 @@ ORDER BY a.Id;";
                     AllocationId = Convert.ToInt32(reader["AlokacjaId"]),
                     Feature = Convert.ToString(reader["AlokacjaCecha"]) ?? string.Empty,
                     Direction = Convert.ToString(reader["AlokacjaKierunek"]) ?? string.Empty,
+                    SourceDocumentNumber = Convert.ToString(reader["ZrodlowyNumerDokumentu"]) ?? string.Empty,
                     Quantity = Convert.ToDecimal(reader["Ilosc"]),
                     UnitQuantity = Convert.ToDecimal(reader["IloscJednostkowa"]),
                     UnitCode = Convert.ToString(reader["Jednostka"]) ?? string.Empty

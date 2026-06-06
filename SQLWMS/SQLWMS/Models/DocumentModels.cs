@@ -97,6 +97,7 @@ namespace SQLWMS.Models
         public string Feature { get; init; } = string.Empty;
         public string DisplayFeature => string.IsNullOrWhiteSpace(Feature) ? "Brak" : Feature;
         public string Direction { get; init; } = string.Empty;
+        public string SourceDocumentNumber { get; init; } = string.Empty;
         public decimal Quantity { get; init; }
         public decimal UnitQuantity { get; init; }
         public string UnitCode { get; init; } = string.Empty;

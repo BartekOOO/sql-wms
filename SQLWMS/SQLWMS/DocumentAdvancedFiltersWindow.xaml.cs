@@ -12,13 +12,15 @@ namespace SQLWMS
         private readonly string _initialWarehouseCode;
         private readonly string _initialSectorCode;
         private readonly string _initialProductCode;
+        private readonly string _initialSeries;
         private bool _isLoading;
 
         internal DocumentAdvancedFiltersWindow(
             DocumentCatalogService documentCatalogService,
             string warehouseCode,
             string sectorCode,
-            string productCode)
+            string productCode,
+            string series)
         {
             InitializeComponent();
 
@@ -26,6 +28,7 @@ namespace SQLWMS
             _initialWarehouseCode = warehouseCode ?? string.Empty;
             _initialSectorCode = sectorCode ?? string.Empty;
             _initialProductCode = productCode ?? string.Empty;
+            _initialSeries = series ?? string.Empty;
 
             Loaded += DocumentAdvancedFiltersWindow_Loaded;
         }
@@ -35,6 +38,8 @@ namespace SQLWMS
         internal string SelectedSectorCode { get; private set; } = string.Empty;
 
         internal string SelectedProductCode { get; private set; } = string.Empty;
+
+        internal string SelectedSeries { get; private set; } = string.Empty;
 
         private async void DocumentAdvancedFiltersWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -46,6 +51,7 @@ namespace SQLWMS
                 await LoadWarehouseOptionsAsync(_initialWarehouseCode);
                 await LoadSectorOptionsAsync(_initialWarehouseCode, _initialSectorCode);
                 await LoadProductOptionsAsync(_initialProductCode);
+                SeriesFilterTextBox.Text = _initialSeries;
             }
             catch (Exception ex)
             {
@@ -116,6 +122,7 @@ namespace SQLWMS
             SelectedWarehouseCode = GetSelectedValue(WarehouseFilterComboBox);
             SelectedSectorCode = GetSelectedValue(SectorFilterComboBox);
             SelectedProductCode = GetSelectedValue(ProductFilterComboBox);
+            SelectedSeries = SeriesFilterTextBox.Text.Trim();
             DialogResult = true;
         }
 
@@ -125,6 +132,7 @@ namespace SQLWMS
             WarehouseFilterComboBox.SelectedIndex = 0;
             await LoadSectorOptionsAsync(null, string.Empty);
             ProductFilterComboBox.SelectedIndex = 0;
+            SeriesFilterTextBox.Clear();
             _isLoading = false;
         }
 

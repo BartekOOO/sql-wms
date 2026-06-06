@@ -171,8 +171,6 @@ SET XACT_ABORT ON;
 			CLOSE kursorAlokacji;
 			DEALLOCATE kursorAlokacji;
 
-			IF 1 = 1
-				THROW 51029, N'w trakcie implemntacji', 1
 			UPDATE SBD.Dokumenty SET [Status] = N'Zatwierdzony' WHERE ID = @Id
 	END
 

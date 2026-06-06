@@ -95,7 +95,7 @@
                     <TextBlock Margin="0,6,0,0"
                                Foreground="#5D6B71"
                                FontSize="13"
-                               Text="Wyszukaj dokumenty po magazynie, sektorze lub towarze. Filtr magazynu zawęza liste sektorow." />
+                               Text="Wyszukaj dokumenty po magazynie, sektorze, towarze lub serii. Filtr magazynu zawęza liste sektorow." />
                 </StackPanel>
 
                 <Grid Grid.Row="1" Margin="0,20,0,0">
@@ -143,23 +143,47 @@
                     </StackPanel>
                 </Grid>
 
-                <StackPanel Grid.Row="2" Margin="0,18,0,0">
-                    <TextBlock Text="Towar"
-                               Foreground="{StaticResource PrimaryBrush}"
-                               FontSize="13"
-                               FontWeight="SemiBold" />
-                    <ComboBox x:Name="ProductFilterComboBox"
-                              Margin="0,8,0,0"
-                              Height="30"
-                              Padding="6,4"
-                              Background="White"
-                              BorderBrush="#D7CCC0"
-                              BorderThickness="1.2"
-                              FontSize="13"
-                              VerticalContentAlignment="Center"
-                              DisplayMemberPath="DisplayName"
-                              SelectedValuePath="Value" />
-                </StackPanel>
+                <Grid Grid.Row="2" Margin="0,18,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="18" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Towar"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold" />
+                        <ComboBox x:Name="ProductFilterComboBox"
+                                  Margin="0,8,0,0"
+                                  Height="30"
+                                  Padding="6,4"
+                                  Background="White"
+                                  BorderBrush="#D7CCC0"
+                                  BorderThickness="1.2"
+                                  FontSize="13"
+                                  VerticalContentAlignment="Center"
+                                  DisplayMemberPath="DisplayName"
+                                  SelectedValuePath="Value" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Seria"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold" />
+                        <TextBox x:Name="SeriesFilterTextBox"
+                                 Margin="0,8,0,0"
+                                 Height="30"
+                                 Padding="10,4"
+                                 Background="White"
+                                 BorderBrush="#D7CCC0"
+                                 BorderThickness="1.2"
+                                 FontSize="13"
+                                 VerticalContentAlignment="Center" />
+                    </StackPanel>
+                </Grid>
 
                 <Grid Grid.Row="3" Margin="0,22,0,0">
                     <Grid.ColumnDefinitions>

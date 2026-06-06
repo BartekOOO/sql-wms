@@ -13,6 +13,7 @@ CREATE OR ALTER PROCEDURE SBD.ListaDokumentow
     @TypDokumentu NVARCHAR(10) = NULL,
     @Miesiac INT = NULL,
     @Rok INT = NULL,
+	@Seria NVARCHAR(100) = NULL,
 
     @TowarKod NVARCHAR(100) = NULL,
     @TowarNazwa NVARCHAR(200) = NULL,
@@ -61,6 +62,10 @@ BEGIN
     IF @TypDokumentu IS NOT NULL
         SET @Where += N'
         AND d.TypDokumentu = @TypDokumentu ';
+
+	IF @Seria IS NOT NULL
+        SET @Where += N'
+        AND d.Seria = @Seria ';
 
     IF @Miesiac IS NOT NULL
         SET @Where += N'
@@ -150,7 +155,8 @@ BEGIN
             @TowarNazwa NVARCHAR(200),
             @Cecha NVARCHAR(100),
             @Offset INT,
-            @WielkoscStrony INT
+            @WielkoscStrony INT,
+			@Seria NVARCHAR(200)
         ',
         @NumerDokumentu = @NumerDokumentu,
         @MagazynDocelowyKod = @MagazynDocelowyKod,
@@ -166,6 +172,7 @@ BEGIN
         @TowarNazwa = @TowarNazwa,
         @Cecha = @Cecha,
         @Offset = @Offset,
-        @WielkoscStrony = @WielkoscStrony;
+        @WielkoscStrony = @WielkoscStrony,
+		@Seria = @Seria;
 END
 GO
