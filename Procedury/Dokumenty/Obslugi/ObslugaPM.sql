@@ -28,7 +28,7 @@ SET XACT_ABORT ON;
 			IF (SELECT COUNT(*) FROM SBD.Pozycje WHERE DokumentId = @Id) = 0
 				THROW 51029, N'dokument nie posiada ¿adnych pozycji.', 1
 	
-			DECLARE @AlokacjaId INT;
+			DECLARE @AlokacjaId INT, @NowaDostawaId INT;
 			DECLARE kursorPozycji CURSOR FAST_FORWARD FOR
 			    SELECT Id FROM SBD.Alokacje WHERE DokumentId = @Id;
 			OPEN kursorPozycji;
@@ -88,7 +88,9 @@ SET XACT_ABORT ON;
 				SELECT TowarId, TowarKod, TowarNazwa, MagazynDocelowyId, SektorDocelowyId, ZakladajacaPozycja, Ilosc
 				,	DataUtworzenia, DataModyfikacji, Cecha, ZakladajacaAlokacja, ZakladajacaAlokacja FROM #dane
 				
-				UPDATE SBD.Alokacje SET Kierunek = N'Przychód' WHERE Id = @AlokacjaId
+				SET @NowaDostawaId = SCOPE_IDENTITY();
+
+				UPDATE SBD.Alokacje SET Kierunek = N'Przychód', DostawaId = @NowaDostawaId WHERE Id = @AlokacjaId
 				DROP TABLE #dane
 			    FETCH NEXT FROM kursorPozycji INTO @AlokacjaId;
 			END
