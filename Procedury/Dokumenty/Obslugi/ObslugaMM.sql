@@ -14,7 +14,8 @@ SET XACT_ABORT ON;
 				WHERE a.DokumentId = @Id AND a.Ilosc <> d.Ilosc)
 				THROW 51029, N'dostawy tego dokumentu zosta³y przesuniête dalej.', 1
 
-			
+			IF 1 = 1
+			THROW 51029, N'jeszcze nie zaimplementowane', 1
 
 			UPDATE SBD.Dokumenty SET [Status] = N'Anulowany' WHERE ID = @Id
 		END
@@ -31,33 +32,37 @@ SET XACT_ABORT ON;
 				   @MagazynDocelowy = MagazynDocelowyId,
 				   @MagazynZrodlowy = MagazynZrodlowyId FROM SBD.Dokumenty WHERE Id = @Id
 
-			IF @SektorDocelowy IS NULL
-			BEGIN
-
-			END
-
-			IF @SektorZrodlowy IS NULL
-			BEGIN
-
-
-			END
-
-
-			DECLARE @AlokacjaId INT;
+			DECLARE @AlokacjaId INT, @Pozostalo DECIMAL(18, 6), @Cecha NVARCHAR(200);
 			
 			DECLARE kursorAlokacji CURSOR FAST_FORWARD FOR
 			    SELECT Id FROM SBD.Alokacje WHERE DokumentId = @Id;
 			
 			OPEN kursorAlokacji;
 			
-			FETCH NEXT FROM curCursor INTO @AlokacjaId;
+			FETCH NEXT FROM kursorAlokacji INTO @AlokacjaId;
 			
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
 			
-			   
+				--Ustalamy ile alokacja oczekuje do zrealizowania, jakiej cechy
+			   SELECT @Pozostalo = Ilosc, @Cecha = Cecha FROM SBD.Alokacje WHERE Id = @AlokacjaId
 
+			   SELECT * INTO #dane FROM SBD.Dostawy 
+					WHERE MagazynId = @MagazynZrodlowy
+					AND (@SektorZrodlowy IS NULL OR SektorId = @SektorZrodlowy)
+					AND Cecha = @Cecha AND Ilosc > 0
+				ORDER BY DataUtworzenia
 
+				IF (SELECT ISNULL(SUM(Ilosc), 0) FROM #dane) < @Pozostalo
+					THROW 51029, N'niewystarczaj¹ca iloœæ zasobów.', 1
+
+				DELETE SBD.Alokacje WHERE Id = @AlokacjaId
+
+				WHILE @Pozostalo > 0
+				BEGIN
+					
+
+				END
 
 			
 			    FETCH NEXT FROM kursorAlokacji INTO @AlokacjaId;
@@ -66,7 +71,8 @@ SET XACT_ABORT ON;
 			CLOSE kursorAlokacji;
 			DEALLOCATE kursorAlokacji;
 
-
+			IF 1 = 1
+				THROW 51029, N'w trakcie implemntacji', 1
 			UPDATE SBD.Dokumenty SET [Status] = N'Zatwierdzony' WHERE ID = @Id
 	END
 

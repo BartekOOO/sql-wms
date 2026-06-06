@@ -90,7 +90,7 @@ SET XACT_ABORT ON;
 			@Ilosc * @JednostkaPrzelicznik,
 			ISNULL(@Cecha, N''),
 			GETDATE(),
-			N'Przychód'
+			N'Szkic'
 		)
 
 		IF @StartedTran = 1

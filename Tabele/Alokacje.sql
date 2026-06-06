@@ -11,7 +11,7 @@ BEGIN
 
         DostawaId INT NULL,
 
-		Kierunek NVARCHAR(50) NOT NULL DEFAULT(N'Przychod'),
+		Kierunek NVARCHAR(50) NOT NULL DEFAULT(N'Przychód'),
 
         Ilosc DECIMAL(18,6) NOT NULL,
 
@@ -45,4 +45,49 @@ BEGIN
     ALTER TABLE SBD.Alokacje
     ADD Cecha NVARCHAR(200) NOT NULL DEFAULT(N'');
 END
+GO
+
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = N'CK_SBD_Dostawy_Kierunek'
+      AND parent_object_id = OBJECT_ID(N'SBD.Alokacje')
+)
+BEGIN
+    ALTER TABLE SBD.Alokacje
+    DROP CONSTRAINT CK_SBD_Dostawy_Kierunek;
+END
+GO
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.default_constraints dc
+    JOIN sys.columns c 
+        ON c.default_object_id = dc.object_id
+    WHERE dc.parent_object_id = OBJECT_ID(N'SBD.Alokacje')
+      AND c.name = N'Kierunek'
+)
+BEGIN
+    DECLARE @sql NVARCHAR(MAX);
+
+    SELECT @sql = N'ALTER TABLE SBD.Alokacje DROP CONSTRAINT ' + QUOTENAME(dc.name)
+    FROM sys.default_constraints dc
+    JOIN sys.columns c 
+        ON c.default_object_id = dc.object_id
+    WHERE dc.parent_object_id = OBJECT_ID(N'SBD.Alokacje')
+      AND c.name = N'Kierunek';
+
+    EXEC sp_executesql @sql;
+END
+GO
+
+ALTER TABLE SBD.Alokacje
+ADD CONSTRAINT DF_SBD_Alokacje_Kierunek
+DEFAULT(N'Szkic') FOR Kierunek;
+GO
+
+ALTER TABLE SBD.Alokacje
+ADD CONSTRAINT CK_SBD_Alokacje_Kierunek
+CHECK (Kierunek IN (N'Szkic', N'Przychód', N'Rozchód'));
 GO
