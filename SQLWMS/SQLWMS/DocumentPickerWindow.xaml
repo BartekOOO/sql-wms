@@ -1,0 +1,314 @@
+<Window x:Class="SQLWMS.DocumentPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Wybierz dokument"
+        Width="980"
+        Height="680"
+        MinWidth="980"
+        MinHeight="680"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="#F2EDE4"
+        FontFamily="Bahnschrift"
+        UseLayoutRounding="True"
+        ShowInTaskbar="False">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#173B47" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#BE6943" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#5D6B71" />
+
+        <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#224C5A" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#102B34" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DialogGhostButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#12FFFFFF" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="#284F5D" />
+            <Setter Property="BorderThickness" Value="1.2" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#18FFFFFF" />
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="22,18,22,18"
+          MouseLeftButtonDown="RootGrid_MouseLeftButtonDown">
+        <Border Background="#FBF8F3"
+                BorderBrush="#D4C9BA"
+                BorderThickness="1.4"
+                CornerRadius="4"
+                Padding="20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Wybierz dokument"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontSize="24"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,6,0,0"
+                               Foreground="{StaticResource MutedBrush}"
+                               FontSize="13"
+                               Text="Lista jest stronicowana. Możesz zawęzić wynik po numerze, typie i statusie, a potem wybrać dokument startowy do traceability." />
+                </StackPanel>
+
+                <Grid Grid.Row="1" Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="320" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="170" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="170" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="110" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="94" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid>
+                        <TextBox x:Name="DocumentNumberTextBox"
+                                 Height="30"
+                                 Padding="10,6"
+                                 Background="White"
+                                 BorderBrush="#D7CCC0"
+                                 BorderThickness="1.2"
+                                 FontSize="13"
+                                 KeyDown="DocumentNumberTextBox_KeyDown" />
+                        <TextBlock Margin="12,0,0,0"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   FontSize="13"
+                                   IsHitTestVisible="False"
+                                   Text="Numer dokumentu"
+                                   VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding Text, ElementName=DocumentNumberTextBox}" Value="" />
+                                                <Condition Binding="{Binding IsKeyboardFocusWithin, ElementName=DocumentNumberTextBox}" Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+
+                    <ComboBox x:Name="DocumentTypeComboBox"
+                              Grid.Column="2"
+                              Height="30"
+                              Padding="6,4"
+                              Background="White"
+                              BorderBrush="#D7CCC0"
+                              BorderThickness="1.2"
+                              FontSize="13"
+                              VerticalContentAlignment="Center"
+                              SelectedIndex="0">
+                        <ComboBoxItem Content="Wszystkie typy" Tag="" />
+                        <ComboBoxItem Content="PM" Tag="PM" />
+                        <ComboBoxItem Content="MM" Tag="MM" />
+                        <ComboBoxItem Content="WM" Tag="WM" />
+                    </ComboBox>
+
+                    <ComboBox x:Name="DocumentStatusComboBox"
+                              Grid.Column="4"
+                              Height="30"
+                              Padding="6,4"
+                              Background="White"
+                              BorderBrush="#D7CCC0"
+                              BorderThickness="1.2"
+                              FontSize="13"
+                              VerticalContentAlignment="Center"
+                              SelectedIndex="0">
+                        <ComboBoxItem Content="Wszystkie statusy" Tag="" />
+                        <ComboBoxItem Content="Szkic" Tag="Szkic" />
+                        <ComboBoxItem Content="Zatwierdzony" Tag="Zatwierdzony" />
+                        <ComboBoxItem Content="Anulowany" Tag="Anulowany" />
+                    </ComboBox>
+
+                    <Button x:Name="SearchButton"
+                            Grid.Column="6"
+                            Height="30"
+                            Style="{StaticResource DialogPrimaryButtonStyle}"
+                            Click="SearchButton_Click"
+                            Content="Szukaj" />
+
+                    <Button Grid.Column="8"
+                            Height="30"
+                            Style="{StaticResource DialogGhostButtonStyle}"
+                            Click="ClearButton_Click"
+                            Content="Wyczysc" />
+                </Grid>
+
+                <Border Grid.Row="2"
+                        Margin="0,18,0,0"
+                        Padding="10"
+                        CornerRadius="4"
+                        Background="#EDF3F0"
+                        BorderBrush="#D6E0DD"
+                        BorderThickness="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock x:Name="StatusTextBlock"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Text="Ladowanie dokumentow..." />
+
+                        <DataGrid x:Name="DocumentsDataGrid"
+                                  Grid.Row="1"
+                                  Margin="0,10,0,0"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserSortColumns="False"
+                                  HeadersVisibility="Column"
+                                  RowHeaderWidth="0"
+                                  GridLinesVisibility="All"
+                                  HorizontalGridLinesBrush="#DDE5E3"
+                                  VerticalGridLinesBrush="#DCCFC0"
+                                  AlternatingRowBackground="#FFF8F3EA"
+                                  RowBackground="White"
+                                  Background="White"
+                                  BorderBrush="#D6E0DD"
+                                  BorderThickness="1"
+                                  ScrollViewer.CanContentScroll="False"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow"
+                                  SelectionChanged="DocumentsDataGrid_SelectionChanged"
+                                  MouseDoubleClick="DocumentsDataGrid_MouseDoubleClick">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Numer dokumentu" Binding="{Binding NumerDokumentu}" Width="1.35*" />
+                                <DataGridTextColumn Header="Typ" Binding="{Binding TypDokumentu}" Width="0.7*" />
+                                <DataGridTextColumn Header="Status" Binding="{Binding StatusDokumentu}" Width="0.95*" />
+                                <DataGridTextColumn Header="Data realizacji" Binding="{Binding DataRealizacji, StringFormat=dd.MM.yyyy HH:mm}" Width="1.05*" />
+                                <DataGridTextColumn Header="Mag. zrodlowy" Binding="{Binding MagazynZrodlowyKod}" Width="0.95*" />
+                                <DataGridTextColumn Header="Sek. zrodlowy" Binding="{Binding SektorZrodlowyKod}" Width="0.9*" />
+                                <DataGridTextColumn Header="Mag. docelowy" Binding="{Binding MagazynDocelowyKod}" Width="0.95*" />
+                                <DataGridTextColumn Header="Sek. docelowy" Binding="{Binding SektorDocelowyKod}" Width="0.9*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="3" Margin="0,18,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="ResultsTextBlock"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource MutedBrush}"
+                               FontSize="12"
+                               Text="0 rekordow" />
+
+                    <Button x:Name="PreviousPageButton"
+                            Grid.Column="1"
+                            Width="102"
+                            Height="30"
+                            Margin="0,0,8,0"
+                            Style="{StaticResource DialogGhostButtonStyle}"
+                            Click="PreviousPageButton_Click"
+                            Content="Poprzednia" />
+
+                    <Button x:Name="NextPageButton"
+                            Grid.Column="2"
+                            Width="102"
+                            Height="30"
+                            Margin="0,0,16,0"
+                            Style="{StaticResource DialogGhostButtonStyle}"
+                            Click="NextPageButton_Click"
+                            Content="Nastepna" />
+
+                    <TextBlock x:Name="PaginationTextBlock"
+                               Grid.Column="3"
+                               Margin="0,0,16,0"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Text="Strona 1 z 1" />
+
+                    <Button Grid.Column="4"
+                            Width="96"
+                            Height="30"
+                            Margin="0,0,8,0"
+                            Style="{StaticResource DialogGhostButtonStyle}"
+                            Click="CancelButton_Click"
+                            Content="Anuluj" />
+
+                    <Button x:Name="ChooseButton"
+                            Grid.Column="5"
+                            Width="116"
+                            Height="30"
+                            Style="{StaticResource DialogPrimaryButtonStyle}"
+                            Click="ChooseButton_Click"
+                            Content="Wybierz" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

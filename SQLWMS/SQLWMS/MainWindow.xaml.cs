@@ -16,19 +16,26 @@ namespace SQLWMS
     public partial class MainWindow : Window
     {
         private const int DocumentsPageSize = 7;
+        private const string TraceabilityBlankFeatureKey = "__BLANK__";
 
         private readonly DocumentCatalogService _documentCatalogService = new();
         private readonly ProductCatalogService _productCatalogService = new();
+        private readonly TraceabilityService _traceabilityService = new();
         private readonly WarehouseCatalogService _warehouseCatalogService = new();
         private readonly UserSessionService _userSessionService = new();
         private readonly ObservableCollection<DocumentListItem> _documents = [];
         private readonly ObservableCollection<ProductMasterItem> _products = [];
+        private readonly ObservableCollection<TraceabilityFilterOption> _traceabilityFeatureOptions = [];
+        private readonly ObservableCollection<TraceabilityFilterOption> _traceabilityProductOptions = [];
+        private readonly ObservableCollection<TraceabilityReportItem> _traceabilityItems = [];
         private readonly ObservableCollection<WarehouseMasterItem> _warehouses = [];
+        private List<TraceabilityReportItem> _traceabilityScopeItems = [];
         private readonly ICollectionView _documentsView;
         private readonly ICollectionView _productsView;
         private readonly ICollectionView _warehousesView;
         private bool _isOpeningDocument;
         private bool _isExecutingDocumentAction;
+        private bool _isTraceabilityFilterLoading;
         private int _documentsCurrentPage = 1;
         private int _documentsTotalCount;
         private int _filterRequestVersion;
@@ -37,6 +44,7 @@ namespace SQLWMS
         private string _documentSectorFilter = string.Empty;
         private string _documentProductFilter = string.Empty;
         private string _documentSeriesFilter = string.Empty;
+        private string _traceabilityLoadedDocumentNumber = string.Empty;
         private NavigationSection _currentSection = NavigationSection.Home;
 
         private enum NavigationSection
@@ -57,8 +65,12 @@ namespace SQLWMS
             _warehousesView = CollectionViewSource.GetDefaultView(_warehouses);
             DocumentsDataGrid.ItemsSource = _documentsView;
             ProductsDataGrid.ItemsSource = _productsView;
+            TraceabilityFeatureComboBox.ItemsSource = _traceabilityFeatureOptions;
+            TraceabilityProductComboBox.ItemsSource = _traceabilityProductOptions;
+            TraceabilityResultsDataGrid.ItemsSource = _traceabilityItems;
             WarehousesDataGrid.ItemsSource = _warehousesView;
 
+            ResetTraceabilityState(clearDocument: true);
             UpdateCurrentUserPresentation();
             UpdateDocumentAdvancedFilterButtons();
             ShowHome();
@@ -463,6 +475,7 @@ namespace SQLWMS
             DocumentTypeFilterComboBox.SelectedIndex = 0;
             DocumentStatusFilterComboBox.SelectedIndex = 0;
             ResetDocumentAdvancedFilters();
+            ResetTraceabilityState(clearDocument: true);
             _documentsCurrentPage = 1;
             _suspendFilterReload = false;
             UpdateDocumentAdvancedFilterButtons();
@@ -490,6 +503,13 @@ namespace SQLWMS
                 WarehousesDataGrid.Items.Refresh();
                 ShowWarehousesLayout();
                 await ReloadCurrentSectionAsync();
+                return;
+            }
+
+            if (section == NavigationSection.Traceability)
+            {
+                TraceabilityResultsDataGrid.Items.Refresh();
+                ShowTraceabilityLayout();
                 return;
             }
 
@@ -669,6 +689,64 @@ namespace SQLWMS
             }
         }
 
+        private async void TraceabilitySelectDocumentButton_Click(object sender, RoutedEventArgs e)
+        {
+            DocumentPickerWindow pickerWindow = new(_documentCatalogService)
+            {
+                Owner = this
+            };
+
+            bool? result = pickerWindow.ShowDialog();
+            if (result != true)
+            {
+                return;
+            }
+
+            await LoadTraceabilityReportAsync(pickerWindow.SelectedDocumentNumber);
+        }
+
+        private void TraceabilityClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            ResetTraceabilityState(clearDocument: true);
+        }
+
+        private void TraceabilityProductComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isTraceabilityFilterLoading)
+            {
+                return;
+            }
+
+            string selectedFeature = GetSelectedTraceabilityOptionValue(TraceabilityFeatureComboBox);
+            PopulateTraceabilityFeatureOptions(_traceabilityScopeItems, GetSelectedTraceabilityOptionValue(TraceabilityProductComboBox), selectedFeature);
+            ApplyTraceabilityFilters();
+        }
+
+        private void TraceabilityFeatureComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isTraceabilityFilterLoading)
+            {
+                return;
+            }
+
+            ApplyTraceabilityFilters();
+        }
+
+        private void TraceabilityResultsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (TraceabilityResultsDataGrid.SelectedItem is not TraceabilityReportItem item)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(item.Path))
+            {
+                return;
+            }
+
+            AppDialogWindow.Show(this, "Pelna sciezka traceability", item.Path, AppDialogKind.Information);
+        }
+
         private async Task EnsureProductDetailsLoadedAsync(ProductMasterItem item)
         {
             if (item.DetailsLoaded)
@@ -731,6 +809,287 @@ namespace SQLWMS
         {
             return comboBox.SelectedItem is System.Windows.Controls.ComboBoxItem item
                 ? Convert.ToString(item.Tag) ?? string.Empty
+                : string.Empty;
+        }
+
+        private async Task LoadTraceabilityReportAsync(string documentNumber)
+        {
+            if (string.IsNullOrWhiteSpace(documentNumber))
+            {
+                SectionStatusTextBlock.Text = "Wybierz dokument startowy, aby pobrac raport traceability.";
+                return;
+            }
+
+            try
+            {
+                SetTraceabilityBusy(true);
+                SectionStatusTextBlock.Text = "Budowanie raportu traceability...";
+                TraceabilitySelectedDocumentTextBlock.Text = documentNumber;
+                TraceabilitySelectedDocumentTextBlock.Foreground = (System.Windows.Media.Brush)FindResource("PrimaryBrush");
+
+                string selectedProduct = GetSelectedTraceabilityOptionValue(TraceabilityProductComboBox);
+                string selectedFeature = GetSelectedTraceabilityOptionValue(TraceabilityFeatureComboBox);
+                List<TraceabilityReportItem> scopeItems = await _traceabilityService.LoadReportAsync(documentNumber);
+
+                _traceabilityLoadedDocumentNumber = documentNumber;
+                _traceabilityScopeItems = scopeItems;
+                PopulateTraceabilityProductOptions(scopeItems, selectedProduct);
+                PopulateTraceabilityFeatureOptions(scopeItems, GetSelectedTraceabilityOptionValue(TraceabilityProductComboBox), selectedFeature);
+                ApplyTraceabilityFilters();
+
+                SectionStatusTextBlock.Text = _traceabilityItems.Count == 0
+                    ? $"Raport nie zwrocil etapow dla dokumentu {documentNumber}."
+                    : "Raport zaladowany. Zmiana towaru i cechy zawęza wynik od razu.";
+            }
+            catch (Exception ex)
+            {
+                _traceabilityLoadedDocumentNumber = string.Empty;
+                _traceabilityScopeItems = [];
+                _traceabilityItems.Clear();
+                ResetTraceabilityFilterOptions();
+                UpdateTraceabilitySummary(string.Empty, _traceabilityItems);
+                TraceabilitySelectedDocumentTextBlock.Text = documentNumber;
+                TraceabilitySelectedDocumentTextBlock.Foreground = (System.Windows.Media.Brush)FindResource("PrimaryBrush");
+                SectionStatusTextBlock.Text = $"Nie udalo sie pobrac raportu traceability. {ex.Message}";
+            }
+            finally
+            {
+                SetTraceabilityBusy(false);
+            }
+        }
+
+        private void ApplyTraceabilityFilters()
+        {
+            IEnumerable<TraceabilityReportItem> items = _traceabilityScopeItems;
+            string selectedProduct = GetSelectedTraceabilityOptionValue(TraceabilityProductComboBox);
+            string selectedFeature = GetSelectedTraceabilityOptionValue(TraceabilityFeatureComboBox);
+
+            if (!string.IsNullOrWhiteSpace(selectedProduct))
+            {
+                items = items.Where(item => string.Equals(item.ProductCode, selectedProduct, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (selectedFeature == TraceabilityBlankFeatureKey)
+            {
+                items = items.Where(item => string.IsNullOrWhiteSpace(item.Feature));
+            }
+            else if (!string.IsNullOrWhiteSpace(selectedFeature))
+            {
+                items = items.Where(item => string.Equals(item.Feature, selectedFeature, StringComparison.OrdinalIgnoreCase));
+            }
+
+            List<TraceabilityReportItem> filteredItems = items.ToList();
+
+            _traceabilityItems.Clear();
+            foreach (TraceabilityReportItem item in filteredItems)
+            {
+                _traceabilityItems.Add(item);
+            }
+
+            if (_traceabilityItems.Count > 0)
+            {
+                TraceabilityResultsDataGrid.SelectedIndex = 0;
+            }
+
+            UpdateTraceabilitySummary(_traceabilityLoadedDocumentNumber, filteredItems);
+
+            if (!string.IsNullOrWhiteSpace(_traceabilityLoadedDocumentNumber))
+            {
+                SectionStatusTextBlock.Text = filteredItems.Count == 0
+                    ? "Brak etapow dla aktualnie wybranego towaru i cechy."
+                    : $"Raport pokazuje {filteredItems.Count} etap(y) dla aktywnego zakresu.";
+            }
+        }
+
+        private void PopulateTraceabilityProductOptions(IEnumerable<TraceabilityReportItem> items, string selectedProduct)
+        {
+            bool previousLoadingState = _isTraceabilityFilterLoading;
+            _isTraceabilityFilterLoading = true;
+
+            _traceabilityProductOptions.Clear();
+            _traceabilityProductOptions.Add(new TraceabilityFilterOption(string.Empty, "Wszystkie towary"));
+
+            foreach (TraceabilityReportItem item in items
+                         .Where(item => !string.IsNullOrWhiteSpace(item.ProductCode))
+                         .GroupBy(item => item.ProductCode, StringComparer.OrdinalIgnoreCase)
+                         .Select(group => group.First())
+                         .OrderBy(item => item.ProductCode))
+            {
+                _traceabilityProductOptions.Add(new TraceabilityFilterOption(item.ProductCode, item.ProductDisplay));
+            }
+
+            TraceabilityProductComboBox.SelectedValue = selectedProduct;
+            if (TraceabilityProductComboBox.SelectedIndex < 0)
+            {
+                TraceabilityProductComboBox.SelectedIndex = 0;
+            }
+
+            TraceabilityProductComboBox.IsEnabled = _traceabilityProductOptions.Count > 1;
+            _isTraceabilityFilterLoading = previousLoadingState;
+        }
+
+        private void PopulateTraceabilityFeatureOptions(IEnumerable<TraceabilityReportItem> items, string selectedProduct, string selectedFeature)
+        {
+            bool previousLoadingState = _isTraceabilityFilterLoading;
+            _isTraceabilityFilterLoading = true;
+
+            IEnumerable<TraceabilityReportItem> source = items;
+            if (!string.IsNullOrWhiteSpace(selectedProduct))
+            {
+                source = source.Where(item => string.Equals(item.ProductCode, selectedProduct, StringComparison.OrdinalIgnoreCase));
+            }
+
+            _traceabilityFeatureOptions.Clear();
+            _traceabilityFeatureOptions.Add(new TraceabilityFilterOption(string.Empty, "Wszystkie cechy"));
+
+            bool hasBlankFeature = false;
+            foreach (TraceabilityReportItem item in source.OrderBy(item => item.DisplayFeature))
+            {
+                if (string.IsNullOrWhiteSpace(item.Feature))
+                {
+                    hasBlankFeature = true;
+                    continue;
+                }
+
+                if (_traceabilityFeatureOptions.Any(option => string.Equals(option.Value, item.Feature, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                _traceabilityFeatureOptions.Add(new TraceabilityFilterOption(item.Feature!, item.Feature!));
+            }
+
+            if (hasBlankFeature)
+            {
+                _traceabilityFeatureOptions.Add(new TraceabilityFilterOption(TraceabilityBlankFeatureKey, "Brak cechy"));
+            }
+
+            TraceabilityFeatureComboBox.SelectedValue = selectedFeature;
+            if (TraceabilityFeatureComboBox.SelectedIndex < 0)
+            {
+                TraceabilityFeatureComboBox.SelectedIndex = 0;
+            }
+
+            TraceabilityFeatureComboBox.IsEnabled = _traceabilityFeatureOptions.Count > 1;
+            _isTraceabilityFilterLoading = previousLoadingState;
+        }
+
+        private void ResetTraceabilityFilterOptions()
+        {
+            bool previousLoadingState = _isTraceabilityFilterLoading;
+            _isTraceabilityFilterLoading = true;
+
+            _traceabilityProductOptions.Clear();
+            _traceabilityProductOptions.Add(new TraceabilityFilterOption(string.Empty, "Wszystkie towary"));
+            TraceabilityProductComboBox.SelectedIndex = 0;
+            TraceabilityProductComboBox.IsEnabled = false;
+
+            _traceabilityFeatureOptions.Clear();
+            _traceabilityFeatureOptions.Add(new TraceabilityFilterOption(string.Empty, "Wszystkie cechy"));
+            TraceabilityFeatureComboBox.SelectedIndex = 0;
+            TraceabilityFeatureComboBox.IsEnabled = false;
+
+            _isTraceabilityFilterLoading = previousLoadingState;
+        }
+
+        private void ResetTraceabilityState(bool clearDocument)
+        {
+            bool previousLoadingState = _isTraceabilityFilterLoading;
+            _isTraceabilityFilterLoading = true;
+
+            if (clearDocument)
+            {
+                TraceabilitySelectedDocumentTextBlock.Text = "Nie wybrano dokumentu startowego";
+                TraceabilitySelectedDocumentTextBlock.Foreground = (System.Windows.Media.Brush)FindResource("MutedBrush");
+            }
+
+            _traceabilityLoadedDocumentNumber = string.Empty;
+            _traceabilityScopeItems = [];
+            _traceabilityItems.Clear();
+            ResetTraceabilityFilterOptions();
+            UpdateTraceabilitySummary(string.Empty, _traceabilityItems);
+
+            _isTraceabilityFilterLoading = previousLoadingState;
+
+            if (_currentSection == NavigationSection.Traceability || clearDocument)
+            {
+                SectionStatusTextBlock.Text = "Wybierz dokument startowy, aby zbudowac raport traceability.";
+            }
+        }
+
+        private void InvalidateTraceabilityResults()
+        {
+            _traceabilityLoadedDocumentNumber = string.Empty;
+            _traceabilityScopeItems = [];
+            _traceabilityItems.Clear();
+            ResetTraceabilityFilterOptions();
+            UpdateTraceabilitySummary(string.Empty, _traceabilityItems);
+
+            if (_currentSection == NavigationSection.Traceability)
+            {
+                SectionStatusTextBlock.Text = string.IsNullOrWhiteSpace(TraceabilitySelectedDocumentTextBlock.Text)
+                    || string.Equals(TraceabilitySelectedDocumentTextBlock.Text, "Nie wybrano dokumentu startowego", StringComparison.OrdinalIgnoreCase)
+                    ? "Wybierz dokument startowy, aby zbudowac raport traceability."
+                    : "Wybierz dokument ponownie, aby przeliczyc traceability dla innego startu.";
+            }
+        }
+
+        private void SetTraceabilityBusy(bool isBusy)
+        {
+            TraceabilitySelectDocumentButton.IsEnabled = !isBusy;
+            TraceabilityClearButton.IsEnabled = !isBusy;
+            TraceabilityProductComboBox.IsEnabled = !isBusy && _traceabilityProductOptions.Count > 1;
+            TraceabilityFeatureComboBox.IsEnabled = !isBusy && _traceabilityFeatureOptions.Count > 1;
+        }
+
+        private void UpdateTraceabilitySummary(string documentNumber, IEnumerable<TraceabilityReportItem> items)
+        {
+            List<TraceabilityReportItem> rows = items.ToList();
+            TraceabilityScopeValueTextBlock.Text = string.IsNullOrWhiteSpace(documentNumber) ? "Brak raportu" : documentNumber;
+            TraceabilityScopeFiltersTextBlock.Text = string.IsNullOrWhiteSpace(documentNumber)
+                ? "Wybierz dokument startowy, aby zobaczyc przeplyw dostaw i powiazan."
+                : BuildTraceabilityFilterSummary();
+            TraceabilityRowsMetricTextBlock.Text = rows.Count.ToString();
+            TraceabilityProductsMetricTextBlock.Text = rows
+                .Where(item => !string.IsNullOrWhiteSpace(item.ProductCode))
+                .Select(item => item.ProductCode)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count()
+                .ToString();
+            TraceabilityDepthMetricTextBlock.Text = rows.Count == 0
+                ? "0"
+                : rows.Max(item => item.Level).ToString();
+        }
+
+        private string BuildTraceabilityFilterSummary()
+        {
+            List<string> parts = [];
+            string selectedProduct = GetSelectedTraceabilityOptionValue(TraceabilityProductComboBox);
+            string selectedFeature = GetSelectedTraceabilityOptionValue(TraceabilityFeatureComboBox);
+
+            if (!string.IsNullOrWhiteSpace(selectedProduct))
+            {
+                parts.Add($"Towar: {selectedProduct}");
+            }
+
+            if (selectedFeature == TraceabilityBlankFeatureKey)
+            {
+                parts.Add("Cecha: Brak");
+            }
+            else if (!string.IsNullOrWhiteSpace(selectedFeature))
+            {
+                parts.Add($"Cecha: {selectedFeature}");
+            }
+
+            return parts.Count == 0
+                ? "Zakres: wszystkie powiazane towary i cechy dla wybranego dokumentu."
+                : $"Zakres: {string.Join(" | ", parts)}";
+        }
+
+        private static string GetSelectedTraceabilityOptionValue(System.Windows.Controls.ComboBox comboBox)
+        {
+            return comboBox.SelectedItem is TraceabilityFilterOption item
+                ? item.Value
                 : string.Empty;
         }
 
@@ -1064,11 +1423,13 @@ namespace SQLWMS
         private void ShowProductsLayout()
         {
             DocumentsToolbarPanel.Visibility = Visibility.Collapsed;
+            TraceabilityToolbarPanel.Visibility = Visibility.Collapsed;
             DocumentsPaginationPanel.Visibility = Visibility.Collapsed;
             SectionToolbarPanel.Visibility = Visibility.Visible;
             SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
             DocumentsDataGrid.Visibility = Visibility.Collapsed;
             ProductsDataGrid.Visibility = Visibility.Visible;
+            TraceabilityContentGrid.Visibility = Visibility.Collapsed;
             WarehousesDataGrid.Visibility = Visibility.Collapsed;
             SectionAddressFilterContainer.Visibility = Visibility.Collapsed;
             SectionAddressSpacerColumn.Width = new GridLength(0);
@@ -1079,11 +1440,13 @@ namespace SQLWMS
         private void ShowWarehousesLayout()
         {
             DocumentsToolbarPanel.Visibility = Visibility.Collapsed;
+            TraceabilityToolbarPanel.Visibility = Visibility.Collapsed;
             DocumentsPaginationPanel.Visibility = Visibility.Collapsed;
             SectionToolbarPanel.Visibility = Visibility.Visible;
             SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
             DocumentsDataGrid.Visibility = Visibility.Collapsed;
             ProductsDataGrid.Visibility = Visibility.Collapsed;
+            TraceabilityContentGrid.Visibility = Visibility.Collapsed;
             WarehousesDataGrid.Visibility = Visibility.Visible;
             SectionAddressFilterContainer.Visibility = Visibility.Visible;
             SectionAddressSpacerColumn.Width = new GridLength(10);
@@ -1094,22 +1457,42 @@ namespace SQLWMS
         private void ShowDocumentsLayout()
         {
             DocumentsToolbarPanel.Visibility = Visibility.Visible;
+            TraceabilityToolbarPanel.Visibility = Visibility.Collapsed;
             SectionToolbarPanel.Visibility = Visibility.Collapsed;
             SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
             DocumentsDataGrid.Visibility = Visibility.Visible;
             ProductsDataGrid.Visibility = Visibility.Collapsed;
+            TraceabilityContentGrid.Visibility = Visibility.Collapsed;
             WarehousesDataGrid.Visibility = Visibility.Collapsed;
             DocumentsPaginationPanel.Visibility = Visibility.Visible;
             SectionStatusTextBlock.Text = string.Empty;
         }
 
+        private void ShowTraceabilityLayout()
+        {
+            DocumentsToolbarPanel.Visibility = Visibility.Collapsed;
+            TraceabilityToolbarPanel.Visibility = Visibility.Visible;
+            SectionToolbarPanel.Visibility = Visibility.Collapsed;
+            DocumentsPaginationPanel.Visibility = Visibility.Collapsed;
+            SectionPlaceholderBorder.Visibility = Visibility.Collapsed;
+            DocumentsDataGrid.Visibility = Visibility.Collapsed;
+            ProductsDataGrid.Visibility = Visibility.Collapsed;
+            TraceabilityContentGrid.Visibility = Visibility.Visible;
+            WarehousesDataGrid.Visibility = Visibility.Collapsed;
+            SectionStatusTextBlock.Text = string.IsNullOrWhiteSpace(_traceabilityLoadedDocumentNumber)
+                ? "Wybierz dokument startowy, aby zbudowac raport traceability."
+                : SectionStatusTextBlock.Text;
+        }
+
         private void ShowPlaceholderLayout(NavigationSection section)
         {
             DocumentsToolbarPanel.Visibility = Visibility.Collapsed;
+            TraceabilityToolbarPanel.Visibility = Visibility.Collapsed;
             SectionToolbarPanel.Visibility = Visibility.Collapsed;
             DocumentsPaginationPanel.Visibility = Visibility.Collapsed;
             DocumentsDataGrid.Visibility = Visibility.Collapsed;
             ProductsDataGrid.Visibility = Visibility.Collapsed;
+            TraceabilityContentGrid.Visibility = Visibility.Collapsed;
             WarehousesDataGrid.Visibility = Visibility.Collapsed;
             SectionPlaceholderBorder.Visibility = Visibility.Visible;
             SectionPlaceholderTextBlock.Text = GetPlaceholderText(section);
@@ -1139,7 +1522,7 @@ namespace SQLWMS
                 NavigationSection.Products =>
                     "Lista towarow zgrupowana po indeksie. Warianty z cecha sa widoczne po rozwinieciu wybranego wiersza.",
                 NavigationSection.Traceability =>
-                    "Obszar do sledzenia pochodzenia, historii ruchu i powiazan pomiedzy operacjami.",
+                    "Raport przeplywu dostaw i alokacji. Zacznij od dokumentu startowego, a potem zawez wynik po towarze i cesze.",
                 _ => ""
             };
         }
@@ -1151,6 +1534,7 @@ namespace SQLWMS
                 NavigationSection.Documents => "Uzyj filtrow nad tabela i przycisku Filtry, a do przechodzenia pomiedzy stronami skorzystaj z pagera pod lista.",
                 NavigationSection.Warehouses => "Kliknij naglowek kolumny, aby sortowac. Uzyj plusa w pierwszej kolumnie, aby doladowac sektory tylko dla wybranego magazynu.",
                 NavigationSection.Products => "Kliknij naglowek kolumny, aby sortowac. Uzyj plusa w pierwszej kolumnie, aby doladowac warianty tylko dla wybranego towaru.",
+                NavigationSection.Traceability => "Najpierw wybierz dokument startowy. Potem wybieraj towar i ceche, aby interaktywnie zwezac trase powiazan.",
                 _ => "Widok zachowuje prosta nawigacje powrotu do panelu glownego."
             };
         }
@@ -1162,6 +1546,18 @@ namespace SQLWMS
                 NavigationSection.Traceability => "Traceability zostawilem jeszcze bez podpiecia. Na tym etapie aktywne sa widoki Towary i Magazyny.",
                 _ => "Ten widok nie ma jeszcze podlaczonej tabeli."
             };
+        }
+
+        private sealed class TraceabilityFilterOption(string value, string displayName)
+        {
+            public string Value { get; } = value;
+
+            public string DisplayName { get; } = displayName;
+
+            public override string ToString()
+            {
+                return DisplayName;
+            }
         }
     }
 }
