@@ -11,11 +11,30 @@ SET XACT_ABORT ON;
 		BEGIN
 			IF EXISTS (SELECT 1 FROM SBD.Alokacje a 
 				JOIN SBD.Dostawy d ON d.ZakladajacaAlokacjaId = a.Id
-				WHERE a.DokumentId = @Id AND a.Ilosc <> d.Ilosc)
+				WHERE a.DokumentId = @Id AND a.Ilosc <> d.Ilosc AND a.Kierunek = N'Przychód')
 				THROW 51029, N'dostawy tego dokumentu zosta³y przesuniête dalej.', 1
 
-			IF 1 = 1
-			THROW 51029, N'jeszcze nie zaimplementowane', 1
+			--Oddajemy iloœci na dostawy Ÿród³owe
+			UPDATE d
+			SET 
+			    d.Ilosc = d.Ilosc + a.Ilosc,
+			    d.DataModyfikacji = GETDATE()
+			FROM SBD.Dostawy d
+			JOIN SBD.Alokacje a
+			    ON a.DostawaId = d.Id
+			WHERE a.DokumentId = @Id
+			  AND a.Kierunek = N'Rozchód';
+
+			--Zerujemy dostawy docelowe za³o¿one przez MM
+			UPDATE d
+			SET 
+			    d.Ilosc = 0,
+			    d.DataModyfikacji = GETDATE()
+			FROM SBD.Dostawy d
+			JOIN SBD.Alokacje a
+			    ON a.Id = d.ZakladajacaAlokacjaId
+			WHERE a.DokumentId = @Id
+			  AND a.Kierunek = N'Przychód';
 
 			UPDATE SBD.Dokumenty SET [Status] = N'Anulowany' WHERE ID = @Id
 		END
