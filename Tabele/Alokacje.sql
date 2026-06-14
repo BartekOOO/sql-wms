@@ -91,3 +91,21 @@ ALTER TABLE SBD.Alokacje
 ADD CONSTRAINT CK_SBD_Alokacje_Kierunek
 CHECK (Kierunek IN (N'Szkic', N'Przychód', N'Rozchód'));
 GO
+
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = N'CK_SBD_Alokacje_Ilosc'
+      AND parent_object_id = OBJECT_ID(N'SBD.Alokacje')
+)
+BEGIN
+    ALTER TABLE SBD.Alokacje
+    DROP CONSTRAINT CK_SBD_Alokacje_Ilosc;
+END
+GO
+
+ALTER TABLE SBD.Alokacje
+ADD CONSTRAINT CK_SBD_Alokacje_Ilosc
+CHECK (Ilosc >= 0);
+GO
